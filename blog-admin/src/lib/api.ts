@@ -1,0 +1,114 @@
+/**
+ * API 请求工具类
+ */
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+const WEB_API_URL = import.meta.env.VITE_WEB_API_URL || 'http://localhost:8080';
+
+interface RequestOptions {
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  data?: any;
+  headers?: Record<string, string>;
+}
+
+export async function request<T>(
+  endpoint: string,
+  options: RequestOptions = {},
+  isWebApi: boolean = false
+): Promise<T> {
+  const baseUrl = isWebApi ? WEB_API_URL : API_BASE_URL;
+  const url = `${baseUrl}${endpoint}`;
+
+  const { method = 'GET', data, headers = {} } = options;
+
+  const config: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
+  };
+
+  if (data && method !== 'GET') {
+    config.body = JSON.stringify(data);
+  }
+
+  try {
+    const response = await fetch(url, config);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API request failed:', error);
+    throw error;
+  }
+}
+
+// Admin API 方法
+export const adminApi = {
+  // 文章管理
+  articles: {
+    getAll: () => request('/api/admin/articles'),
+    getById: (id: number) => request(`/api/admin/articles/${id}`),
+    create: (data: any) => request('/api/admin/articles', {
+      method: 'POST',
+      data,
+    }),
+    update: (id: number, data: any) => request(`/api/admin/articles/${id}`, {
+      method: 'PUT',
+      data,
+    }),
+    delete: (id: number) => request(`/api/admin/articles/${id}`, {
+      method: 'DELETE',
+    }),
+  },
+  
+  // 分类管理
+  categories: {
+    getAll: () => request('/api/admin/categories'),
+    create: (data: any) => request('/api/admin/categories', {
+      method: 'POST',
+      data,
+    }),
+    update: (id: number, data: any) => request(`/api/admin/categories/${id}`, {
+      method: 'PUT',
+      data,
+    }),
+    delete: (id: number) => request(`/api/admin/categories/${id}`, {
+      method: 'DELETE',
+    }),
+  },
+  
+  // 标签管理
+  tags: {
+    getAll: () => request('/api/admin/tags'),
+    create: (data: any) => request('/api/admin/tags', {
+      method: 'POST',
+      data,
+    }),
+    update: (id: number, data: any) => request(`/api/admin/tags/${id}`, {
+      method: 'PUT',
+      data,
+    }),
+    delete: (id: number) => request(`/api/admin/tags/${id}`, {
+      method: 'DELETE',
+    }),
+  },
+};
+
+// Web API 方法（用于预览等）
+export const webApi = {
+  articles: {
+    getAll: () => request('/api/articles', {}, true),
+    getById: (id: number) => request(`/api/articles/${id}`, {}, true),
+  },
+  categories: {
+    getAll: () => request('/api/categories', {}, true),
+  },
+  tags: {
+    getAll: () => request('/api/tags', {}, true),
+  },
+};
