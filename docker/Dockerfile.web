@@ -1,0 +1,20 @@
+# Web API Dockerfile
+FROM maven:3.9-eclipse-temurin-21 AS builder
+
+WORKDIR /app
+COPY pom.xml .
+COPY blog-common ./blog-common
+COPY blog-core ./blog-core
+COPY blog-web-api ./blog-web-api
+COPY blog-admin-api ./blog-admin-api
+
+RUN mvn clean package -DskipTests -pl blog-web-api -am
+
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+COPY --from=builder /app/blog-web-api/target/blog-web-api-*.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

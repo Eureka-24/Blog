@@ -1,0 +1,113 @@
+version: '3.8'
+
+# 本地开发配置 - 简化版，无需 SSL
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: blog-postgres
+    environment:
+      POSTGRES_DB: blog
+      POSTGRES_USER: blog
+      POSTGRES_PASSWORD: blog123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - blog-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blog"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: blog-redis
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - blog-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Meilisearch 搜索引擎
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    container_name: blog-meilisearch
+    environment:
+      MEILI_MASTER_KEY: blogSearchKey
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - meilisearch_data:/meili_data
+    ports:
+      - "7700:7700"
+    networks:
+      - blog-network
+
+  # Web API 服务
+  web-api:
+    build:
+      context: ../blog-api
+      dockerfile: ../docker/Dockerfile.web
+    container_name: blog-web-api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: blog
+      DB_USER: blog
+      DB_PASS: blog123
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - blog-network
+    restart: unless-stopped
+
+  # Admin API 服务
+  admin-api:
+    build:
+      context: ../blog-api
+      dockerfile: ../docker/Dockerfile.admin
+    container_name: blog-admin-api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: blog
+      DB_USER: blog
+      DB_PASS: blog123
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - blog-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  meilisearch_data:
+
+networks:
+  blog-network:
+    driver: bridge
