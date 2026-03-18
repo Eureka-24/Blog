@@ -27,6 +27,13 @@ public class AdminTagController {
         return ResponseEntity.ok(tag);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Tag> update(@PathVariable Long id, @RequestBody Tag tag) {
+        tag.setId(id);
+        tagService.updateById(tag);
+        return ResponseEntity.ok(tag);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         tagService.removeById(id);

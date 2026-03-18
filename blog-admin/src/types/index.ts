@@ -18,6 +18,11 @@ export interface Article {
   updateTime?: string;
 }
 
+export interface ArticleRequest {
+  article: Partial<Article>;
+  tagIds?: number[];
+}
+
 export interface Category {
   id?: number;
   name: string;

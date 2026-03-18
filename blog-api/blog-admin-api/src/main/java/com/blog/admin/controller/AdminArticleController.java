@@ -1,5 +1,6 @@
 package com.blog.admin.controller;
 
+import com.blog.admin.dto.ArticleRequest;
 import com.blog.core.entity.Article;
 import com.blog.core.service.ArticleService;
 import lombok.RequiredArgsConstructor;
@@ -31,14 +32,14 @@ public class AdminArticleController {
     }
 
     @PostMapping
-    public ResponseEntity<Article> create(@RequestBody Article article) {
-        return ResponseEntity.ok(articleService.createArticle(article, null));
+    public ResponseEntity<Article> create(@RequestBody ArticleRequest request) {
+        return ResponseEntity.ok(articleService.createArticle(request.getArticle(), request.getTagIds()));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Article> update(@PathVariable Long id, @RequestBody Article article) {
-        article.setId(id);
-        return ResponseEntity.ok(articleService.updateArticle(article, null));
+    public ResponseEntity<Article> update(@PathVariable Long id, @RequestBody ArticleRequest request) {
+        request.getArticle().setId(id);
+        return ResponseEntity.ok(articleService.updateArticle(request.getArticle(), request.getTagIds()));
     }
 
     @DeleteMapping("/{id}")

@@ -1,4 +1,4 @@
-import type { Article, Category, Tag } from '../types';
+import type { Article, ArticleRequest, Category, Tag } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 const WEB_API_URL = import.meta.env.VITE_WEB_API_URL || 'http://localhost:8080';
@@ -51,11 +51,11 @@ export const adminApi = {
   articles: {
     getAll: () => request<Article[]>('/api/admin/articles'),
     getById: (id: number) => request<Article>(`/api/admin/articles/${id}`),
-    create: (data: Partial<Article>) => request<Article>('/api/admin/articles', {
+    create: (data: ArticleRequest) => request<Article>('/api/admin/articles', {
       method: 'POST',
       data,
     }),
-    update: (id: number, data: Partial<Article>) => request<Article>(`/api/admin/articles/${id}`, {
+    update: (id: number, data: ArticleRequest) => request<Article>(`/api/admin/articles/${id}`, {
       method: 'PUT',
       data,
     }),

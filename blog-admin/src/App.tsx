@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { adminApi } from './lib/api'
-import type { Article, Category, Tag } from './types'
+import type { Article, ArticleRequest, Category, Tag } from './types'
 import './App.css'
 
 type Page = 'dashboard' | 'articles' | 'categories' | 'tags'
@@ -45,7 +45,7 @@ function App() {
       case 'dashboard':
         return <Dashboard articles={articles} categories={categories} tags={tags} />
       case 'articles':
-        return <ArticlesPage articles={articles} setArticles={setArticles} />
+        return <ArticlesPage articles={articles} setArticles={setArticles} categories={categories} tags={tags} />
       case 'categories':
         return <CategoriesPage categories={categories} setCategories={setCategories} />
       case 'tags':
@@ -202,9 +202,11 @@ function Dashboard({ articles, categories, tags }: DashboardProps) {
 interface ArticlesPageProps {
   articles: Article[]
   setArticles: (articles: Article[]) => void
+  categories: Category[]
+  tags: Tag[]
 }
 
-function ArticlesPage({ articles, setArticles }: ArticlesPageProps) {
+function ArticlesPage({ articles, setArticles, categories, tags }: ArticlesPageProps) {
   const [showForm, setShowForm] = useState(false)
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
 
@@ -237,6 +239,8 @@ function ArticlesPage({ articles, setArticles }: ArticlesPageProps) {
       {showForm && (
         <ArticleForm 
           article={editingArticle}
+          categories={categories}
+          tags={tags}
           onSuccess={() => {
             setShowForm(false)
             window.location.reload()
@@ -308,19 +312,24 @@ function ArticlesPage({ articles, setArticles }: ArticlesPageProps) {
 // 文章表单
 interface ArticleFormProps {
   article?: Article | null
+  categories: Category[]
+  tags: Tag[]
   onSuccess: () => void
   onCancel: () => void
 }
 
-function ArticleForm({ article, onSuccess, onCancel }: ArticleFormProps) {
+function ArticleForm({ article, categories, tags, onSuccess, onCancel }: ArticleFormProps) {
   const [formData, setFormData] = useState<Partial<Article>>({
     title: article?.title || '',
     content: article?.content || '',
     summary: article?.summary || '',
     categoryId: article?.categoryId,
-    status: article?.status || 1,
+    status: article?.status || 0,
     coverImage: article?.coverImage || '',
   })
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>(
+    article?.tags?.map(t => t.id!) || []
+  )
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -328,10 +337,14 @@ function ArticleForm({ article, onSuccess, onCancel }: ArticleFormProps) {
     setSubmitting(true)
 
     try {
+      const requestData: ArticleRequest = {
+        article: formData,
+        tagIds: selectedTagIds,
+      }
       if (article?.id) {
-        await adminApi.articles.update(article.id, formData)
+        await adminApi.articles.update(article.id, requestData)
       } else {
-        await adminApi.articles.create(formData)
+        await adminApi.articles.create(requestData)
       }
       onSuccess()
     } catch (err) {
@@ -342,12 +355,20 @@ function ArticleForm({ article, onSuccess, onCancel }: ArticleFormProps) {
     }
   }
 
+  const toggleTag = (tagId: number) => {
+    setSelectedTagIds(prev => 
+      prev.includes(tagId) 
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    )
+  }
+
   return (
     <form className="form" onSubmit={handleSubmit}>
       <h3>{article ? '编辑文章' : '新建文章'}</h3>
       
       <div className="form-group">
-        <label>标题</label>
+        <label>标题 *</label>
         <input
           type="text"
           value={formData.title}
@@ -356,22 +377,70 @@ function ArticleForm({ article, onSuccess, onCancel }: ArticleFormProps) {
         />
       </div>
 
+      <div className="form-row">
+        <div className="form-group">
+          <label>分类</label>
+          <select
+            value={formData.categoryId || ''}
+            onChange={(e) => setFormData({ ...formData, categoryId: e.target.value ? Number(e.target.value) : undefined })}
+          >
+            <option value="">选择分类</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>状态</label>
+          <select
+            value={formData.status || 0}
+            onChange={(e) => setFormData({ ...formData, status: Number(e.target.value) })}
+          >
+            <option value={0}>草稿</option>
+            <option value={1}>已发布</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label>标签</label>
+        <div className="tag-selector">
+          {tags.length === 0 ? (
+            <span className="empty-hint">暂无标签，请先创建标签</span>
+          ) : (
+            tags.map(tag => (
+              <label key={tag.id} className="tag-checkbox">
+                <input
+                  type="checkbox"
+                  checked={selectedTagIds.includes(tag.id!)}
+                  onChange={() => toggleTag(tag.id!)}
+                />
+                <span>{tag.name}</span>
+              </label>
+            ))
+          )}
+        </div>
+      </div>
+
       <div className="form-group">
         <label>摘要</label>
         <textarea
           value={formData.summary}
           onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
           rows={3}
+          placeholder="文章摘要（可选）"
         />
       </div>
 
       <div className="form-group">
-        <label>内容</label>
+        <label>内容 *</label>
         <textarea
           value={formData.content}
           onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-          rows={10}
+          rows={12}
           required
+          placeholder="支持 Markdown 格式"
         />
       </div>
 
@@ -381,6 +450,7 @@ function ArticleForm({ article, onSuccess, onCancel }: ArticleFormProps) {
           type="url"
           value={formData.coverImage || ''}
           onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
+          placeholder="https://example.com/image.jpg"
         />
       </div>
 

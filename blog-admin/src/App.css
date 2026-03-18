@@ -280,7 +280,7 @@
 
 /* 表单样式 */
 .form {
-  max-width: 600px;
+  max-width: 800px;
   padding: 20px;
   background: #fafafa;
   border-radius: 8px;
@@ -290,6 +290,15 @@
     margin: 0 0 20px;
     font-size: 16px;
     color: #303133;
+  }
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  
+  .form-group {
+    flex: 1;
   }
 }
 
@@ -304,13 +313,16 @@
   }
   
   input,
-  textarea {
+  textarea,
+  select {
     width: 100%;
     padding: 10px;
     border: 1px solid #dcdfe6;
     border-radius: 4px;
     font-size: 14px;
     transition: border-color 0.3s;
+    background: white;
+    color: #303133;
     
     &:focus {
       outline: none;
@@ -322,6 +334,53 @@
     resize: vertical;
     font-family: inherit;
   }
+  
+  select {
+    cursor: pointer;
+  }
+}
+
+.tag-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  background: white;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  min-height: 42px;
+}
+
+.tag-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: #f4f4f5;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #606266;
+  transition: all 0.3s;
+  
+  input {
+    width: auto;
+    margin: 0;
+  }
+  
+  &:has(input:checked) {
+    background: #ecf5ff;
+    color: #409eff;
+  }
+  
+  &:hover {
+    background: #e9e9eb;
+  }
+}
+
+.empty-hint {
+  color: #909399;
+  font-size: 13px;
 }
 
 .form-actions {
