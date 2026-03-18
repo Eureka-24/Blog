@@ -131,7 +131,7 @@ export default function Home() {
                           </span>
                         )}
                         <span className="text-sm text-gray-500">
-                          {new Date(article.createTime).toLocaleDateString('zh-CN')}
+                          {article.createTime ? new Date(article.createTime).toLocaleDateString('zh-CN') : '-'}
                         </span>
                         <span className="text-sm text-gray-500">
                           👁 {article.viewCount}

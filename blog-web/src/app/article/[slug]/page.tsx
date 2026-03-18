@@ -103,11 +103,11 @@ export default function ArticleDetail() {
                 </span>
               )}
               <span className="text-sm text-gray-500">
-                {new Date(article.createTime).toLocaleDateString('zh-CN', {
+                {article.createTime ? new Date(article.createTime).toLocaleDateString('zh-CN', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
-                })}
+                }) : '-'}
               </span>
               <span className="text-sm text-gray-500">
                 👁 {article.viewCount} 次阅读

@@ -2,6 +2,7 @@ com\blog\core\service\impl\CommentServiceImpl.class
 com\blog\core\service\CategoryService.class
 com\blog\core\config\MybatisPlusConfig.class
 com\blog\core\entity\Article.class
+com\blog\core\config\MybatisPlusConfig$1.class
 com\blog\core\mapper\CommentMapper.class
 com\blog\core\service\impl\ArticleServiceImpl.class
 com\blog\core\service\TagService.class
