@@ -614,6 +614,157 @@
   font-size: 13px;
 }
 
+/* 评论管理样式 */
+.article-title {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.author-info {
+  min-width: 150px;
+}
+
+.author-email {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.comment-content {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ip-address {
+  font-family: monospace;
+  font-size: 12px;
+  color: #606266;
+}
+
+/* 按文章分组的评论样式 */
+.comments-grouped-view {
+  padding: 0;
+}
+
+.group-actions {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+}
+
+.btn-expand-all,
+.btn-collapse-all {
+  padding: 8px 16px;
+  background: #409eff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.btn-expand-all:hover,
+.btn-collapse-all:hover {
+  background: #66b1ff;
+}
+
+.total-comments {
+  color: #606266;
+  font-size: 14px;
+}
+
+.article-comment-group {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.article-header {
+  padding: 16px 20px;
+  background: #fafafa;
+  border-bottom: 1px solid #e4e7ed;
+  transition: background 0.2s;
+  text-align: left;
+}
+
+.article-header:hover {
+  background: #f5f7fa;
+}
+
+.expand-icon {
+  font-size: 12px;
+  color: #909399;
+  width: 20px;
+  display: inline-block;
+  transition: transform 0.3s;
+  text-align: left;
+}
+
+.article-title-text {
+  font-size: 15px;
+  color: #303133;
+  font-weight: 500;
+  text-align: left;
+}
+
+.comment-count-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #ecf5ff;
+  color: #409eff;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.comments-table-container {
+  padding: 0;
+}
+
+.comments-table-container .data-table {
+  margin: 0;
+  border-radius: 0;
+}
+
+.comments-table-container tbody tr:hover {
+  background: #f5f7fa;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.mr-2 {
+  margin-right: 8px;
+}
+
+.mb-4 {
+  margin-bottom: 16px;
+}
+
+.ml-4 {
+  margin-left: 16px;
+}
+
+.mt-2 {
+  margin-top: 8px;
+}
+
 .form-actions {
   display: flex;
   gap: 12px;

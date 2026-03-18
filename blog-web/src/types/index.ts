@@ -35,6 +35,20 @@ export interface Tag {
   createTime: string;
 }
 
+export interface Comment {
+  id: number;
+  articleId: number;
+  parentId?: number | null;
+  authorName: string;
+  authorEmail?: string | null;
+  authorWebsite?: string | null;
+  content: string;
+  ip?: string | null;
+  userAgent?: string | null;
+  children?: Comment[];
+  createTime: string;
+}
+
 export interface PageResponse<T> {
   records: T[];
   total: number;

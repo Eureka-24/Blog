@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react'
 import { adminApi } from './lib/api'
-import type { Article, ArticleRequest, Category, Tag } from './types'
+import type { Article, ArticleRequest, Category, Tag, Comment } from './types'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import './App.css'
 
-type Page = 'dashboard' | 'articles' | 'categories' | 'tags'
+type Page = 'dashboard' | 'articles' | 'categories' | 'tags' | 'comments'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
   const [articles, setArticles] = useState<Article[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [tags, setTags] = useState<Tag[]>([])
+  const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -20,14 +21,16 @@ function App() {
     setLoading(true)
     setError(null)
     try {
-      const [articlesRes, categoriesRes, tagsRes] = await Promise.all([
+      const [articlesRes, categoriesRes, tagsRes, commentsRes] = await Promise.all([
         adminApi.articles.getAll(),
         adminApi.categories.getAll(),
         adminApi.tags.getAll(),
+        adminApi.comments.getAll(),
       ])
       setArticles(articlesRes || [])
       setCategories(categoriesRes || [])
       setTags(tagsRes || [])
+      setComments(commentsRes || [])
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : '加载数据失败'
       setError(errorMsg)
@@ -52,6 +55,8 @@ function App() {
         return <CategoriesPage categories={categories} setCategories={setCategories} />
       case 'tags':
         return <TagsPage tags={tags} setTags={setTags} />
+      case 'comments':
+        return <CommentsPage comments={comments} setComments={setComments} articles={articles} />
       default:
         return null
     }
@@ -89,6 +94,12 @@ function App() {
           >
             🏷️ 标签管理
           </button>
+          <button
+            className={`nav-item ${currentPage === 'comments' ? 'active' : ''}`}
+            onClick={() => setCurrentPage('comments')}
+          >
+            💬 评论管理
+          </button>
         </nav>
       </aside>
 
@@ -100,6 +111,7 @@ function App() {
             {currentPage === 'articles' && '文章管理'}
             {currentPage === 'categories' && '分类管理'}
             {currentPage === 'tags' && '标签管理'}
+            {currentPage === 'comments' && '评论管理'}
           </h2>
           <button onClick={loadData} disabled={loading}>
             {loading ? '加载中...' : '🔄 刷新'}
@@ -882,6 +894,199 @@ function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
         </button>
       </div>
     </form>
+  )
+}
+
+// 评论管理页面
+interface CommentsPageProps {
+  comments: Comment[]
+  setComments: (comments: Comment[]) => void
+  articles: Article[]
+}
+
+interface ArticleWithComments {
+  article: Article
+  comments: Comment[]
+  isExpanded: boolean
+}
+
+function CommentsPage({ comments, setComments, articles }: CommentsPageProps) {
+  const [expandedArticles, setExpandedArticles] = useState<Set<number>>(new Set())
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('确定要删除这条评论吗？')) return
+
+    try {
+      await adminApi.comments.delete(id)
+      setComments(comments.filter(c => c.id !== id))
+    } catch (err) {
+      alert('删除失败')
+      console.error('Error deleting comment:', err)
+    }
+  }
+
+  const getArticleTitle = (articleId: number) => {
+    const article = articles.find(a => a.id === articleId)
+    return article?.title || `文章 ID: ${articleId}`
+  }
+
+  const toggleArticle = (articleId: number) => {
+    const newExpanded = new Set(expandedArticles)
+    if (newExpanded.has(articleId)) {
+      newExpanded.delete(articleId)
+    } else {
+      newExpanded.add(articleId)
+    }
+    setExpandedArticles(newExpanded)
+  }
+
+  // 按文章分组评论
+  const groupedComments = comments.reduce((acc, comment) => {
+    const articleId = comment.articleId
+    if (!acc[articleId]) {
+      acc[articleId] = []
+    }
+    acc[articleId].push(comment)
+    return acc
+  }, {} as Record<number, Comment[]>)
+
+  // 转换为数组并排序
+  const articlesWithComments = Object.entries(groupedComments).map(([articleId, comments]) => ({
+    article: articles.find(a => a.id === Number(articleId)),
+    comments,
+    articleId: Number(articleId),
+  })).filter(item => item.article).sort((a, b) => {
+    // 按文章创建时间倒序
+    const dateA = a.article?.createTime ? new Date(a.article.createTime).getTime() : 0
+    const dateB = b.article?.createTime ? new Date(b.article.createTime).getTime() : 0
+    return dateB - dateA
+  })
+
+  // 展开所有文章
+  const expandAll = () => {
+    setExpandedArticles(new Set(articlesWithComments.map(item => item.articleId)))
+  }
+
+  // 收起所有文章
+  const collapseAll = () => {
+    setExpandedArticles(new Set())
+  }
+
+  return (
+    <div className="page">
+      {comments.length === 0 ? (
+        <p className="empty-state">暂无评论</p>
+      ) : (
+        <div className="comments-grouped-view">
+          {/* 操作按钮 */}
+          <div className="group-actions mb-4">
+            <button 
+              className="btn-expand-all mr-2"
+              onClick={expandAll}
+            >
+              📖 展开全部
+            </button>
+            <button 
+              className="btn-collapse-all"
+              onClick={collapseAll}
+            >
+              📕 收起全部
+            </button>
+            <span className="total-comments ml-4">
+              共 {articlesWithComments.length} 篇文章，{comments.length} 条评论
+            </span>
+          </div>
+
+          {/* 文章列表 */}
+          {articlesWithComments.map(({ articleId, article, comments: articleComments }) => (
+            <div key={articleId} className="article-comment-group mb-4">
+              {/* 文章标题栏（可点击展开/收起） */}
+              <div 
+                className="article-header cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => toggleArticle(articleId)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1">
+                    <span className="expand-icon">
+                      {expandedArticles.has(articleId) ? '▼' : '▶'}
+                    </span>
+                    <span className="article-title-text font-medium">
+                      {article?.title || `文章 ID: ${articleId}`}
+                    </span>
+                    <span className="comment-count-badge">
+                      {articleComments.length} 条评论
+                    </span>
+                  </div>
+                  <div className="article-meta text-sm text-gray-500">
+                    {article?.category && (
+                      <span className="mr-3">📁 {article.category.name}</span>
+                    )}
+                    <span>
+                      {article?.createTime 
+                        ? new Date(article.createTime).toLocaleDateString('zh-CN')
+                        : '-'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 评论列表（展开时显示） */}
+              {expandedArticles.has(articleId) && (
+                <div className="comments-table-container mt-2">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: '60px' }}>ID</th>
+                        <th>作者</th>
+                        <th>内容</th>
+                        <th style={{ width: '120px' }}>IP</th>
+                        <th style={{ width: '160px' }}>创建时间</th>
+                        <th style={{ width: '80px' }}>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {articleComments.map(comment => (
+                        <tr key={comment.id}>
+                          <td>{comment.id}</td>
+                          <td>
+                            <div className="author-info">
+                              <div className="author-name">{comment.authorName}</div>
+                              {comment.authorEmail && (
+                                <div className="author-email">{comment.authorEmail}</div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="comment-content">{comment.content}</td>
+                          <td className="ip-address">{comment.ip || '-'}</td>
+                          <td>
+                            {comment.createTime 
+                              ? new Date(comment.createTime).toLocaleString('zh-CN')
+                              : '-'}
+                          </td>
+                          <td>
+                            <div className="action-buttons">
+                              <button 
+                                className="btn-delete"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDelete(comment.id!)
+                                }}
+                              >
+                                删除
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

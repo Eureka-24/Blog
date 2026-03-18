@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { articleApi } from '@/lib/api';
-import type { Article } from '@/types';
+import { articleApi, commentApi } from '@/lib/api';
+import type { Article, Comment } from '@/types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -13,6 +13,7 @@ export default function ArticleDetail() {
   const slug = params.slug as string;
   
   const [article, setArticle] = useState<Article | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +31,12 @@ export default function ArticleDetail() {
         const data = await articleApi.getArticle(slug);
         console.log('Article data:', data);
         setArticle(data);
+        
+        // 加载评论
+        if (data && data.id) {
+          const commentsData = await commentApi.getByArticle(data.id);
+          setComments(commentsData || []);
+        }
       } catch (err) {
         console.error('Error fetching article:', err);
         const errorMsg = err instanceof Error ? err.message : '加载失败';
@@ -171,6 +178,15 @@ export default function ArticleDetail() {
             <p className="text-gray-900 font-medium truncate">暂无</p>
           </button>
         </div>
+
+        {/* 评论区 */}
+        <div className="mt-12">
+          <CommentSection 
+            articleId={article.id} 
+            comments={comments} 
+            setComments={setComments} 
+          />
+        </div>
       </main>
 
       {/* 页脚 */}
@@ -181,6 +197,179 @@ export default function ArticleDetail() {
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+// 评论区组件
+interface CommentSectionProps {
+  articleId: number;
+  comments: Comment[];
+  setComments: (comments: Comment[]) => void;
+}
+
+function CommentSection({ articleId, comments, setComments }: CommentSectionProps) {
+  const [newComment, setNewComment] = useState({
+    authorName: '',
+    authorEmail: '',
+    content: '',
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newComment.authorName || !newComment.content) {
+      alert('请填写昵称和评论内容');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const commentData = {
+        articleId,
+        authorName: newComment.authorName,
+        authorEmail: newComment.authorEmail || undefined,
+        content: newComment.content,
+      };
+
+      await commentApi.create(commentData);
+      
+      // 重新加载评论
+      const updatedComments = await commentApi.getByArticle(articleId);
+      setComments(updatedComments || []);
+      
+      // 清空表单
+      setNewComment({
+        authorName: '',
+        authorEmail: '',
+        content: '',
+      });
+      
+      alert('评论成功！');
+    } catch (err) {
+      console.error('Error submitting comment:', err);
+      alert('评论失败，请稍后重试');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const formatTime = (timeString: string) => {
+    const date = new Date(timeString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return '刚刚';
+    if (minutes < 60) return `${minutes}分钟前`;
+    if (hours < 24) return `${hours}小时前`;
+    if (days < 7) return `${days}天前`;
+    return date.toLocaleDateString('zh-CN');
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">评论</h2>
+
+      {/* 评论列表 */}
+      {comments.length === 0 ? (
+        <p className="text-gray-500 text-center py-8">暂无评论，快来抢沙发吧！</p>
+      ) : (
+        <div className="space-y-6 mb-8">
+          {comments.map((comment) => (
+            <div key={comment.id} className="border-b pb-4 last:border-b-0">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <span className="text-blue-600 font-bold">
+                    {comment.authorName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <div>
+                      <span className="font-medium text-gray-900">{comment.authorName}</span>
+                      {comment.authorWebsite && (
+                        <a 
+                          href={comment.authorWebsite} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="ml-2 text-sm text-blue-600 hover:underline"
+                        >
+                          🌐 个人网站
+                        </a>
+                      )}
+                    </div>
+                    <span className="text-sm text-gray-500">{formatTime(comment.createTime)}</span>
+                  </div>
+                  <p className="text-gray-700">{comment.content}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 评论表单 */}
+      <form onSubmit={handleSubmit} className="border-t pt-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">发表评论</h3>
+        
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="authorName" className="block text-sm font-medium text-gray-700 mb-1">
+              昵称 *
+            </label>
+            <input
+              type="text"
+              id="authorName"
+              value={newComment.authorName}
+              onChange={(e) => setNewComment({ ...newComment, authorName: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+              placeholder="请输入昵称"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="authorEmail" className="block text-sm font-medium text-gray-700 mb-1">
+              邮箱（可选）
+            </label>
+            <input
+              type="email"
+              id="authorEmail"
+              value={newComment.authorEmail}
+              onChange={(e) => setNewComment({ ...newComment, authorEmail: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+              placeholder="your@email.com"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
+              评论内容 *
+            </label>
+            <textarea
+              id="content"
+              value={newComment.content}
+              onChange={(e) => setNewComment({ ...newComment, content: e.target.value })}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+              placeholder="写下你的评论..."
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            {submitting ? '提交中...' : '发表评论'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import type { Article, Category, Tag, PageResponse } from '@/types';
+import type { Article, Category, Tag, PageResponse, Comment } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:8081';
@@ -73,4 +73,16 @@ export const categoryApi = {
 export const tagApi = {
   // 获取标签列表
   getTags: () => request<Tag[]>('/api/tags'),
+};
+
+// 评论 API
+export const commentApi = {
+  // 获取文章评论
+  getByArticle: (articleId: number) => request<Comment[]>(`/api/comments/article/${articleId}`),
+  
+  // 提交评论
+  create: (data: Partial<Comment>) => request<Comment>('/api/comments', {
+    method: 'POST',
+    data,
+  }),
 };

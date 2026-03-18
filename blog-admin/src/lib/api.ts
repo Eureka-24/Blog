@@ -1,4 +1,4 @@
-import type { Article, ArticleRequest, Category, Tag } from '../types';
+import type { Article, ArticleRequest, Category, Tag, Comment } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 const WEB_API_URL = import.meta.env.VITE_WEB_API_URL || 'http://localhost:8080';
@@ -92,6 +92,15 @@ export const adminApi = {
       data,
     }),
     delete: (id: number) => request<void>(`/api/admin/tags/${id}`, {
+      method: 'DELETE',
+    }),
+  },
+  
+  // 评论管理
+  comments: {
+    getAll: () => request<Comment[]>('/api/admin/comments'),
+    getByArticle: (articleId: number) => request<Comment[]>(`/api/admin/comments/article/${articleId}`),
+    delete: (id: number) => request<void>(`/api/admin/comments/${id}`, {
       method: 'DELETE',
     }),
   },
