@@ -1,6 +1,4 @@
-/**
- * API 请求工具类
- */
+import type { Article, Category, Tag, PageResponse } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:8081';
@@ -49,38 +47,26 @@ export async function request<T>(
 
 // Web API 方法
 export const articleApi = {
-  // 获取文章列表
-  getArticles: () => request('/api/articles'),
+  // 获取文章列表（分页）
+  getArticles: (page: number = 1, size: number = 10) => 
+    request<PageResponse<Article>>(`/api/articles?page=${page}&size=${size}`),
   
   // 获取文章详情
-  getArticle: (id: number) => request(`/api/articles/${id}`),
+  getArticle: (slug: string) => request<Article>(`/api/articles/${slug}`),
   
-  // 获取分类列表
-  getCategories: () => request('/api/categories'),
+  // 获取热门文章
+  getHotArticles: (limit: number = 5) => request<Article[]>(`/api/articles/hot?limit=${limit}`),
   
-  // 获取标签列表
-  getTags: () => request('/api/tags'),
+  // 按标签获取文章
+  getArticlesByTag: (tagId: number) => request<Article[]>(`/api/articles/tag/${tagId}`),
 };
 
-// Admin API 方法
-export const adminArticleApi = {
-  // 获取所有文章（管理端）
-  getArticles: () => request('/api/admin/articles', {}, true),
-  
-  // 创建文章
-  createArticle: (data: any) => request('/api/admin/articles', {
-    method: 'POST',
-    data,
-  }, true),
-  
-  // 更新文章
-  updateArticle: (id: number, data: any) => request(`/api/admin/articles/${id}`, {
-    method: 'PUT',
-    data,
-  }, true),
-  
-  // 删除文章
-  deleteArticle: (id: number) => request(`/api/admin/articles/${id}`, {
-    method: 'DELETE',
-  }, true),
+export const categoryApi = {
+  // 获取分类列表
+  getCategories: () => request<Category[]>('/api/categories'),
+};
+
+export const tagApi = {
+  // 获取标签列表
+  getTags: () => request<Tag[]>('/api/tags'),
 };

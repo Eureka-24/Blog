@@ -1,0 +1,5 @@
+com\blog\web\controller\CategoryController.class
+com\blog\web\controller\ArticleController.class
+com\blog\web\WebApiApplication.class
+com\blog\web\controller\CommentController.class
+com\blog\web\controller\TagController.class

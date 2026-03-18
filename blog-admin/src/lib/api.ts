@@ -1,6 +1,4 @@
-/**
- * API 请求工具类
- */
+import type { Article, Category, Tag } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 const WEB_API_URL = import.meta.env.VITE_WEB_API_URL || 'http://localhost:8080';
@@ -51,49 +49,49 @@ export async function request<T>(
 export const adminApi = {
   // 文章管理
   articles: {
-    getAll: () => request('/api/admin/articles'),
-    getById: (id: number) => request(`/api/admin/articles/${id}`),
-    create: (data: any) => request('/api/admin/articles', {
+    getAll: () => request<Article[]>('/api/admin/articles'),
+    getById: (id: number) => request<Article>(`/api/admin/articles/${id}`),
+    create: (data: Partial<Article>) => request<Article>('/api/admin/articles', {
       method: 'POST',
       data,
     }),
-    update: (id: number, data: any) => request(`/api/admin/articles/${id}`, {
+    update: (id: number, data: Partial<Article>) => request<Article>(`/api/admin/articles/${id}`, {
       method: 'PUT',
       data,
     }),
-    delete: (id: number) => request(`/api/admin/articles/${id}`, {
+    delete: (id: number) => request<void>(`/api/admin/articles/${id}`, {
       method: 'DELETE',
     }),
   },
   
   // 分类管理
   categories: {
-    getAll: () => request('/api/admin/categories'),
-    create: (data: any) => request('/api/admin/categories', {
+    getAll: () => request<Category[]>('/api/admin/categories'),
+    create: (data: Partial<Category>) => request<Category>('/api/admin/categories', {
       method: 'POST',
       data,
     }),
-    update: (id: number, data: any) => request(`/api/admin/categories/${id}`, {
+    update: (id: number, data: Partial<Category>) => request<Category>(`/api/admin/categories/${id}`, {
       method: 'PUT',
       data,
     }),
-    delete: (id: number) => request(`/api/admin/categories/${id}`, {
+    delete: (id: number) => request<void>(`/api/admin/categories/${id}`, {
       method: 'DELETE',
     }),
   },
   
   // 标签管理
   tags: {
-    getAll: () => request('/api/admin/tags'),
-    create: (data: any) => request('/api/admin/tags', {
+    getAll: () => request<Tag[]>('/api/admin/tags'),
+    create: (data: Partial<Tag>) => request<Tag>('/api/admin/tags', {
       method: 'POST',
       data,
     }),
-    update: (id: number, data: any) => request(`/api/admin/tags/${id}`, {
+    update: (id: number, data: Partial<Tag>) => request<Tag>(`/api/admin/tags/${id}`, {
       method: 'PUT',
       data,
     }),
-    delete: (id: number) => request(`/api/admin/tags/${id}`, {
+    delete: (id: number) => request<void>(`/api/admin/tags/${id}`, {
       method: 'DELETE',
     }),
   },
@@ -102,13 +100,13 @@ export const adminApi = {
 // Web API 方法（用于预览等）
 export const webApi = {
   articles: {
-    getAll: () => request('/api/articles', {}, true),
-    getById: (id: number) => request(`/api/articles/${id}`, {}, true),
+    getAll: () => request<Article[]>('/api/articles', {}, true),
+    getById: (id: number) => request<Article>(`/api/articles/${id}`, {}, true),
   },
   categories: {
-    getAll: () => request('/api/categories', {}, true),
+    getAll: () => request<Category[]>('/api/categories', {}, true),
   },
   tags: {
-    getAll: () => request('/api/tags', {}, true),
+    getAll: () => request<Tag[]>('/api/tags', {}, true),
   },
 };

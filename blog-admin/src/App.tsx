@@ -1,198 +1,732 @@
 import { useState, useEffect } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
 import { adminApi } from './lib/api'
+import type { Article, Category, Tag } from './types'
 import './App.css'
 
-interface Article {
-  id: number;
-  title: string;
-  content: string;
-  createdAt: string;
-}
+type Page = 'dashboard' | 'articles' | 'categories' | 'tags'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [currentPage, setCurrentPage] = useState<Page>('dashboard')
   const [articles, setArticles] = useState<Article[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [tags, setTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // 测试 API 连接
-  const fetchArticles = async () => {
+  // 加载数据
+  const loadData = async () => {
     setLoading(true)
     setError(null)
     try {
-      const data = await adminApi.articles.getAll()
-      setArticles(Array.isArray(data) ? data : [])
-      console.log('Articles fetched:', data)
+      const [articlesRes, categoriesRes, tagsRes] = await Promise.all([
+        adminApi.articles.getAll(),
+        adminApi.categories.getAll(),
+        adminApi.tags.getAll(),
+      ])
+      setArticles(articlesRes || [])
+      setCategories(categoriesRes || [])
+      setTags(tagsRes || [])
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to fetch articles'
+      const errorMsg = err instanceof Error ? err.message : '加载数据失败'
       setError(errorMsg)
-      console.error('Error fetching articles:', err)
+      console.error('Error loading data:', err)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    // 组件加载时自动获取文章列表
-    fetchArticles()
+    loadData()
   }, [])
 
+  // 渲染不同页面
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'dashboard':
+        return <Dashboard articles={articles} categories={categories} tags={tags} />
+      case 'articles':
+        return <ArticlesPage articles={articles} setArticles={setArticles} />
+      case 'categories':
+        return <CategoriesPage categories={categories} setCategories={setCategories} />
+      case 'tags':
+        return <TagsPage tags={tags} setTags={setTags} />
+      default:
+        return null
+    }
+  }
+
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app">
+      {/* 侧边栏导航 */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h1>博客管理系统</h1>
         </div>
-        <div>
-          <h1>Admin Dashboard</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-          
-          {/* API 测试区域 */}
-          <div style={{ marginTop: '20px', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-            <h2>API Connection Test</h2>
-            <button 
-              onClick={fetchArticles}
-              disabled={loading}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#646cff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.6 : 1
-              }}
-            >
-              {loading ? 'Loading...' : 'Load Articles from API'}
-            </button>
-            
-            {error && (
-              <div style={{ marginTop: '10px', color: 'red', padding: '10px', backgroundColor: '#ffe6e6', borderRadius: '4px' }}>
-                <strong>Error:</strong> {error}
-                <br />
-                <small>Make sure your backend API is running at http://localhost:8081</small>
-              </div>
-            )}
-            
-            {articles.length > 0 && (
-              <div style={{ marginTop: '15px' }}>
-                <h3>Articles ({articles.length})</h3>
-                <ul style={{ textAlign: 'left', maxWidth: '600px' }}>
-                  {articles.map(article => (
-                    <li key={article.id} style={{ marginBottom: '10px' }}>
-                      <strong>{article.title}</strong>
-                      <br />
-                      <small style={{ color: '#666' }}>
-                        Created: {new Date(article.createdAt).toLocaleString()}
-                      </small>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+        <nav className="sidebar-nav">
+          <button
+            className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setCurrentPage('dashboard')}
+          >
+            📊 仪表盘
+          </button>
+          <button
+            className={`nav-item ${currentPage === 'articles' ? 'active' : ''}`}
+            onClick={() => setCurrentPage('articles')}
+          >
+            📝 文章管理
+          </button>
+          <button
+            className={`nav-item ${currentPage === 'categories' ? 'active' : ''}`}
+            onClick={() => setCurrentPage('categories')}
+          >
+            📁 分类管理
+          </button>
+          <button
+            className={`nav-item ${currentPage === 'tags' ? 'active' : ''}`}
+            onClick={() => setCurrentPage('tags')}
+          >
+            🏷️ 标签管理
+          </button>
+        </nav>
+      </aside>
+
+      {/* 主内容区 */}
+      <main className="main-content">
+        <header className="top-bar">
+          <h2 className="page-title">
+            {currentPage === 'dashboard' && '仪表盘'}
+            {currentPage === 'articles' && '文章管理'}
+            {currentPage === 'categories' && '分类管理'}
+            {currentPage === 'tags' && '标签管理'}
+          </h2>
+          <button onClick={loadData} disabled={loading}>
+            {loading ? '加载中...' : '🔄 刷新'}
+          </button>
+        </header>
+
+        {error && (
+          <div className="error-message">
+            ❌ {error}
+          </div>
+        )}
+
+        {renderPage()}
+      </main>
+    </div>
+  )
+}
+
+// 仪表盘组件
+interface DashboardProps {
+  articles: Article[]
+  categories: Category[]
+  tags: Tag[]
+}
+
+function Dashboard({ articles, categories, tags }: DashboardProps) {
+  const totalViews = articles.reduce((sum, article) => sum + (article.viewCount || 0), 0)
+
+  return (
+    <div className="dashboard">
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon">📝</div>
+          <div className="stat-info">
+            <div className="stat-value">{articles.length}</div>
+            <div className="stat-label">文章总数</div>
           </div>
         </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+
+        <div className="stat-card">
+          <div className="stat-icon">👁</div>
+          <div className="stat-info">
+            <div className="stat-value">{totalViews}</div>
+            <div className="stat-label">总阅读量</div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon">📁</div>
+          <div className="stat-info">
+            <div className="stat-value">{categories.length}</div>
+            <div className="stat-label">分类数量</div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon">🏷️</div>
+          <div className="stat-info">
+            <div className="stat-value">{tags.length}</div>
+            <div className="stat-label">标签数量</div>
+          </div>
+        </div>
+      </div>
+
+      {/* 最新文章 */}
+      <div className="section">
+        <h3>最新文章</h3>
+        {articles.length === 0 ? (
+          <p className="empty-state">暂无文章</p>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>标题</th>
+                <th>分类</th>
+                <th>阅读量</th>
+                <th>创建时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              {articles.slice(0, 5).map(article => (
+                <tr key={article.id}>
+                  <td>{article.title}</td>
+                  <td>{article.category?.name || '-'}</td>
+                  <td>{article.viewCount || 0}</td>
+                  <td>
+                    {article.createTime 
+                      ? new Date(article.createTime).toLocaleDateString('zh-CN')
+                      : '-'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// 文章管理页面
+interface ArticlesPageProps {
+  articles: Article[]
+  setArticles: (articles: Article[]) => void
+}
+
+function ArticlesPage({ articles, setArticles }: ArticlesPageProps) {
+  const [showForm, setShowForm] = useState(false)
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null)
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('确定要删除这篇文章吗？')) return
+
+    try {
+      await adminApi.articles.delete(id)
+      setArticles(articles.filter(a => a.id !== id))
+    } catch (err) {
+      alert('删除失败')
+      console.error('Error deleting article:', err)
+    }
+  }
+
+  return (
+    <div className="page">
+      <div className="page-header">
+        <button 
+          className="btn-primary"
+          onClick={() => {
+            setEditingArticle(null)
+            setShowForm(!showForm)
+          }}
         >
-          Count is {count}
+          {showForm ? '取消' : '+ 新建文章'}
         </button>
-      </section>
+      </div>
 
-      <div className="ticks"></div>
+      {showForm && (
+        <ArticleForm 
+          article={editingArticle}
+          onSuccess={() => {
+            setShowForm(false)
+            window.location.reload()
+          }}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {articles.length === 0 ? (
+        <p className="empty-state">暂无文章</p>
+      ) : (
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>标题</th>
+              <th>分类</th>
+              <th>状态</th>
+              <th>阅读量</th>
+              <th>创建时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {articles.map(article => (
+              <tr key={article.id}>
+                <td>{article.id}</td>
+                <td>{article.title}</td>
+                <td>{article.category?.name || '-'}</td>
+                <td>
+                  <span className={`status-badge ${article.status === 1 ? 'published' : 'draft'}`}>
+                    {article.status === 1 ? '已发布' : '草稿'}
+                  </span>
+                </td>
+                <td>{article.viewCount || 0}</td>
+                <td>
+                  {article.createTime 
+                    ? new Date(article.createTime).toLocaleString('zh-CN')
+                    : '-'}
+                </td>
+                <td>
+                  <div className="action-buttons">
+                    <button 
+                      className="btn-edit"
+                      onClick={() => {
+                        setEditingArticle(article)
+                        setShowForm(true)
+                      }}
+                    >
+                      编辑
+                    </button>
+                    <button 
+                      className="btn-delete"
+                      onClick={() => handleDelete(article.id!)}
+                    >
+                      删除
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+// 文章表单
+interface ArticleFormProps {
+  article?: Article | null
+  onSuccess: () => void
+  onCancel: () => void
+}
+
+function ArticleForm({ article, onSuccess, onCancel }: ArticleFormProps) {
+  const [formData, setFormData] = useState<Partial<Article>>({
+    title: article?.title || '',
+    content: article?.content || '',
+    summary: article?.summary || '',
+    categoryId: article?.categoryId,
+    status: article?.status || 1,
+    coverImage: article?.coverImage || '',
+  })
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+
+    try {
+      if (article?.id) {
+        await adminApi.articles.update(article.id, formData)
+      } else {
+        await adminApi.articles.create(formData)
+      }
+      onSuccess()
+    } catch (err) {
+      alert('保存失败')
+      console.error('Error saving article:', err)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form className="form" onSubmit={handleSubmit}>
+      <h3>{article ? '编辑文章' : '新建文章'}</h3>
+      
+      <div className="form-group">
+        <label>标题</label>
+        <input
+          type="text"
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <label>摘要</label>
+        <textarea
+          value={formData.summary}
+          onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+          rows={3}
+        />
+      </div>
+
+      <div className="form-group">
+        <label>内容</label>
+        <textarea
+          value={formData.content}
+          onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+          rows={10}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <label>封面图片 URL</label>
+        <input
+          type="url"
+          value={formData.coverImage || ''}
+          onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
+        />
+      </div>
+
+      <div className="form-actions">
+        <button type="submit" className="btn-primary" disabled={submitting}>
+          {submitting ? '保存中...' : '保存'}
+        </button>
+        <button type="button" onClick={onCancel}>
+          取消
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// 分类管理页面
+interface CategoriesPageProps {
+  categories: Category[]
+  setCategories: (categories: Category[]) => void
+}
+
+function CategoriesPage({ categories, setCategories }: CategoriesPageProps) {
+  const [showForm, setShowForm] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('确定要删除这个分类吗？')) return
+
+    try {
+      await adminApi.categories.delete(id)
+      setCategories(categories.filter(c => c.id !== id))
+    } catch (err) {
+      alert('删除失败')
+      console.error('Error deleting category:', err)
+    }
+  }
+
+  return (
+    <div className="page">
+      <div className="page-header">
+        <button 
+          className="btn-primary"
+          onClick={() => {
+            setEditingCategory(null)
+            setShowForm(!showForm)
+          }}
+        >
+          {showForm ? '取消' : '+ 新建分类'}
+        </button>
+      </div>
+
+      {showForm && (
+        <CategoryForm
+          category={editingCategory}
+          onSuccess={() => {
+            setShowForm(false)
+            window.location.reload()
+          }}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
+
+      {categories.length === 0 ? (
+        <p className="empty-state">暂无分类</p>
+      ) : (
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>名称</th>
+              <th>描述</th>
+              <th>排序</th>
+              <th>创建时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {categories.map(category => (
+              <tr key={category.id}>
+                <td>{category.id}</td>
+                <td>{category.name}</td>
+                <td>{category.description || '-'}</td>
+                <td>{category.sortOrder || 0}</td>
+                <td>
+                  {category.createTime 
+                    ? new Date(category.createTime).toLocaleString('zh-CN')
+                    : '-'}
+                </td>
+                <td>
+                  <div className="action-buttons">
+                    <button 
+                      className="btn-edit"
+                      onClick={() => {
+                        setEditingCategory(category)
+                        setShowForm(true)
+                      }}
+                    >
+                      编辑
+                    </button>
+                    <button 
+                      className="btn-delete"
+                      onClick={() => handleDelete(category.id!)}
+                    >
+                      删除
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+}
+
+// 分类表单
+interface CategoryFormProps {
+  category?: Category | null
+  onSuccess: () => void
+  onCancel: () => void
+}
+
+function CategoryForm({ category, onSuccess, onCancel }: CategoryFormProps) {
+  const [formData, setFormData] = useState<Partial<Category>>({
+    name: category?.name || '',
+    description: category?.description || '',
+    sortOrder: category?.sortOrder || 0,
+  })
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+
+    try {
+      if (category?.id) {
+        await adminApi.categories.update(category.id, formData)
+      } else {
+        await adminApi.categories.create(formData)
+      }
+      onSuccess()
+    } catch (err) {
+      alert('保存失败')
+      console.error('Error saving category:', err)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form className="form" onSubmit={handleSubmit}>
+      <h3>{category ? '编辑分类' : '新建分类'}</h3>
+      
+      <div className="form-group">
+        <label>名称</label>
+        <input
+          type="text"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <label>描述</label>
+        <textarea
+          value={formData.description || ''}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          rows={3}
+        />
+      </div>
+
+      <div className="form-group">
+        <label>排序</label>
+        <input
+          type="number"
+          value={formData.sortOrder || 0}
+          onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) })}
+        />
+      </div>
+
+      <div className="form-actions">
+        <button type="submit" className="btn-primary" disabled={submitting}>
+          {submitting ? '保存中...' : '保存'}
+        </button>
+        <button type="button" onClick={onCancel}>
+          取消
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// 标签管理页面
+interface TagsPageProps {
+  tags: Tag[]
+  setTags: (tags: Tag[]) => void
+}
+
+function TagsPage({ tags, setTags }: TagsPageProps) {
+  const [showForm, setShowForm] = useState(false)
+  const [editingTag, setEditingTag] = useState<Tag | null>(null)
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('确定要删除这个标签吗？')) return
+
+    try {
+      await adminApi.tags.delete(id)
+      setTags(tags.filter(t => t.id !== id))
+    } catch (err) {
+      alert('删除失败')
+      console.error('Error deleting tag:', err)
+    }
+  }
+
+  return (
+    <div className="page">
+      <div className="page-header">
+        <button 
+          className="btn-primary"
+          onClick={() => {
+            setEditingTag(null)
+            setShowForm(!showForm)
+          }}
+        >
+          {showForm ? '取消' : '+ 新建标签'}
+        </button>
+      </div>
+
+      {showForm && (
+        <TagForm
+          tag={editingTag}
+          onSuccess={() => {
+            setShowForm(false)
+            window.location.reload()
+          }}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
+
+      {tags.length === 0 ? (
+        <p className="empty-state">暂无标签</p>
+      ) : (
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>名称</th>
+              <th>创建时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tags.map(tag => (
+              <tr key={tag.id}>
+                <td>{tag.id}</td>
+                <td>{tag.name}</td>
+                <td>
+                  {tag.createTime 
+                    ? new Date(tag.createTime).toLocaleString('zh-CN')
+                    : '-'}
+                </td>
+                <td>
+                  <div className="action-buttons">
+                    <button 
+                      className="btn-edit"
+                      onClick={() => {
+                        setEditingTag(tag)
+                        setShowForm(true)
+                      }}
+                    >
+                      编辑
+                    </button>
+                    <button 
+                      className="btn-delete"
+                      onClick={() => handleDelete(tag.id!)}
+                    >
+                      删除
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+}
+
+// 标签表单
+interface TagFormProps {
+  tag?: Tag | null
+  onSuccess: () => void
+  onCancel: () => void
+}
+
+function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
+  const [formData, setFormData] = useState<Partial<Tag>>({
+    name: tag?.name || '',
+  })
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+
+    try {
+      if (tag?.id) {
+        await adminApi.tags.update(tag.id, formData)
+      } else {
+        await adminApi.tags.create(formData)
+      }
+      onSuccess()
+    } catch (err) {
+      alert('保存失败')
+      console.error('Error saving tag:', err)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form className="form" onSubmit={handleSubmit}>
+      <h3>{tag ? '编辑标签' : '新建标签'}</h3>
+      
+      <div className="form-group">
+        <label>名称</label>
+        <input
+          type="text"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
+        />
+      </div>
+
+      <div className="form-actions">
+        <button type="submit" className="btn-primary" disabled={submitting}>
+          {submitting ? '保存中...' : '保存'}
+        </button>
+        <button type="button" onClick={onCancel}>
+          取消
+        </button>
+      </div>
+    </form>
   )
 }
 

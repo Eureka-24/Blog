@@ -37,7 +37,7 @@ if (!(Test-Path ssl/cert.pem)) {
 # 构建并启动服务
 Write-Host "构建并启动服务..."
 docker-compose down
-docker-compose build
+docker-compose build --no-cache
 docker-compose up -d
 
 Write-Host ""

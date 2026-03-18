@@ -56,11 +56,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @Transactional
     public Article createArticle(Article article, List<Long> tagIds) {
+        // 如果 slug 为空，先生成一个临时 slug（使用时间戳）
         if (!StringUtils.hasText(article.getSlug())) {
-            article.setSlug(generateSlug(article.getTitle()));
+            article.setSlug("post-" + System.currentTimeMillis());
         }
+        
+        // 保存文章
         save(article);
         
+        // 处理标签
         if (tagIds != null && !tagIds.isEmpty()) {
             saveArticleTags(article.getId(), tagIds);
         }
@@ -71,14 +75,19 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @Transactional
     public Article updateArticle(Article article, List<Long> tagIds) {
+        // 如果 slug 为空，生成一个临时 slug
         if (!StringUtils.hasText(article.getSlug())) {
-            article.setSlug(generateSlug(article.getTitle()));
+            article.setSlug("post-" + System.currentTimeMillis());
         }
+        
+        // 更新文章
         updateById(article);
         
+        // 删除旧标签关联
         articleTagMapper.delete(new LambdaQueryWrapper<ArticleTag>()
                 .eq(ArticleTag::getArticleId, article.getId()));
         
+        // 处理新标签
         if (tagIds != null && !tagIds.isEmpty()) {
             saveArticleTags(article.getId(), tagIds);
         }
@@ -100,6 +109,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     private String generateSlug(String title) {
+        // 如果标题是中文或为空，使用时间戳 + 随机数
+        if (title == null || title.trim().isEmpty() || !title.matches(".*[a-zA-Z].*")) {
+            return "post-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 1000);
+        }
+        
+        // 英文标题正常处理
         return title.toLowerCase()
                 .replaceAll("[^a-z0-9\\s-]", "")
                 .replaceAll("\\s+", "-")
