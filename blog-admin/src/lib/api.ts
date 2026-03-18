@@ -103,6 +103,10 @@ export const adminApi = {
     delete: (id: number) => request<void>(`/api/admin/comments/${id}`, {
       method: 'DELETE',
     }),
+    reply: (parentId: number, data: Partial<Comment>) => request<Comment>(`/api/admin/comments/${parentId}/reply`, {
+      method: 'POST',
+      data,
+    }),
   },
 };
 

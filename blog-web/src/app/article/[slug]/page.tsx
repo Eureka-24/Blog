@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { articleApi, commentApi } from '@/lib/api';
@@ -215,6 +215,8 @@ function CommentSection({ articleId, comments, setComments }: CommentSectionProp
     content: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [replyTo, setReplyTo] = useState<{ id: number; authorName: string } | null>(null);
+  const [placeholder, setPlaceholder] = useState('写下你的评论...');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,8 +228,22 @@ function CommentSection({ articleId, comments, setComments }: CommentSectionProp
 
     setSubmitting(true);
     try {
+      // 找到根评论的 ID
+      let rootIdValue: number | undefined = undefined;
+      if (replyTo) {
+        // 查找被回复的评论属于哪个根评论
+        const repliedComment = comments.find(c => c.id === replyTo.id);
+        if (repliedComment) {
+          // 如果被回复的是根评论，rootId 就是它的 id
+          // 如果被回复的是子评论，rootId 是它父评论的 id
+          rootIdValue = repliedComment.rootId || repliedComment.parentId || repliedComment.id;
+        }
+      }
+
       const commentData = {
         articleId,
+        parentId: replyTo?.id || undefined, // 如果有回复对象，设置 parentId
+        rootId: rootIdValue, // 设置为根评论的 ID
         authorName: newComment.authorName,
         authorEmail: newComment.authorEmail || undefined,
         content: newComment.content,
@@ -239,12 +255,14 @@ function CommentSection({ articleId, comments, setComments }: CommentSectionProp
       const updatedComments = await commentApi.getByArticle(articleId);
       setComments(updatedComments || []);
       
-      // 清空表单
+      // 清空表单并重置状态
       setNewComment({
         authorName: '',
         authorEmail: '',
         content: '',
       });
+      setReplyTo(null);
+      setPlaceholder('写下你的评论...');
       
       alert('评论成功！');
     } catch (err) {
@@ -253,6 +271,17 @@ function CommentSection({ articleId, comments, setComments }: CommentSectionProp
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // 处理回复点击 - 现在支持对任何评论的回复
+  const handleReplyClick = (commentId: number, authorName: string) => {
+    setReplyTo({ id: commentId, authorName });
+    setPlaceholder(`回复 @${authorName} 的消息`);
+  };
+
+  const cancelReply = () => {
+    setReplyTo(null);
+    setPlaceholder('写下你的评论...');
   };
 
   const formatTime = (timeString: string) => {
@@ -270,6 +299,87 @@ function CommentSection({ articleId, comments, setComments }: CommentSectionProp
     return date.toLocaleDateString('zh-CN');
   };
 
+  // 构建包含所有评论（根评论 + 子评论）的扁平 Map，用于查找 @被回复者
+  const allCommentsMap = useMemo(() => {
+    const map = new Map<number, Comment>();
+    comments.forEach(c => {
+      map.set(c.id, c);
+      if (c.children) {
+        c.children.forEach(child => map.set(child.id, child));
+      }
+    });
+    return map;
+  }, [comments]);
+
+  // 渲染评论及其所有回复（平级展示）
+  const renderComment = (comment: Comment, isReply: boolean = false) => {
+    // 从全量 Map 中查找被回复的评论作者
+    const getRepliedAuthor = (parentId: number | undefined): string => {
+      if (!parentId) return '';
+      const parentComment = allCommentsMap.get(parentId);
+      return parentComment ? parentComment.authorName : '用户';
+    };
+
+    // 安全检查：确保 comment 和 authorName 存在
+    if (!comment || !comment.authorName) {
+      return null;
+    }
+
+    return (
+      <div 
+        key={comment.id} 
+        className={`border-b pb-4 last:border-b-0 ${isReply ? 'ml-12 mt-4' : ''}`}
+      >
+        <div className="flex items-start gap-3">
+          <div className={`rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 ${isReply ? 'w-8 h-8' : 'w-10 h-10'}`}>
+            <span className={`text-blue-600 font-bold ${isReply ? 'text-sm' : ''}`}>
+              {comment.authorName.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-1">
+              <div>
+                <span className="font-medium text-gray-900">{comment.authorName}</span>
+                {comment.authorWebsite && (
+                  <a 
+                    href={comment.authorWebsite} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="ml-2 text-sm text-blue-600 hover:underline"
+                  >
+                    🌐 个人网站
+                  </a>
+                )}
+                {/* 显示回复对象 */}
+                {comment.parentId && comment.parentId > 0 && (
+                  <span className="ml-2 text-xs text-gray-500">
+                    回复 @{getRepliedAuthor(comment.parentId)}
+                  </span>
+                )}
+              </div>
+              <span className="text-sm text-gray-500">{formatTime(comment.createTime)}</span>
+            </div>
+            <p className="text-gray-700">{comment.content}</p>
+            {/* 回复按钮 - 对所有评论显示（包括子评论） */}
+            <button
+              onClick={() => handleReplyClick(comment.id!, comment.authorName)}
+              className="mt-2 text-sm text-blue-600 hover:text-blue-700"
+            >
+              💬 回复
+            </button>
+          </div>
+        </div>
+        
+        {/* 递归渲染该评论的所有回复 */}
+        {comment.children && comment.children.length > 0 && (
+          <div className="mt-2">
+            {comment.children.map(reply => renderComment(reply, true))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">评论</h2>
@@ -279,36 +389,10 @@ function CommentSection({ articleId, comments, setComments }: CommentSectionProp
         <p className="text-gray-500 text-center py-8">暂无评论，快来抢沙发吧！</p>
       ) : (
         <div className="space-y-6 mb-8">
-          {comments.map((comment) => (
-            <div key={comment.id} className="border-b pb-4 last:border-b-0">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 font-bold">
-                    {comment.authorName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <div>
-                      <span className="font-medium text-gray-900">{comment.authorName}</span>
-                      {comment.authorWebsite && (
-                        <a 
-                          href={comment.authorWebsite} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="ml-2 text-sm text-blue-600 hover:underline"
-                        >
-                          🌐 个人网站
-                        </a>
-                      )}
-                    </div>
-                    <span className="text-sm text-gray-500">{formatTime(comment.createTime)}</span>
-                  </div>
-                  <p className="text-gray-700">{comment.content}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+          {comments
+            .filter(comment => !comment.parentId) // 只显示一级评论
+            .map(comment => renderComment(comment))
+          }
         </div>
       )}
 
@@ -356,9 +440,19 @@ function CommentSection({ articleId, comments, setComments }: CommentSectionProp
               onChange={(e) => setNewComment({ ...newComment, content: e.target.value })}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
-              placeholder="写下你的评论..."
+              placeholder={placeholder}
               required
             />
+            {/* 取消回复按钮 */}
+            {replyTo && (
+              <button
+                type="button"
+                onClick={cancelReply}
+                className="mt-2 text-sm text-gray-600 hover:text-gray-800"
+              >
+                ✕ 取消回复
+              </button>
+            )}
           </div>
 
           <button

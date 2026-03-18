@@ -904,14 +904,10 @@ interface CommentsPageProps {
   articles: Article[]
 }
 
-interface ArticleWithComments {
-  article: Article
-  comments: Comment[]
-  isExpanded: boolean
-}
-
 function CommentsPage({ comments, setComments, articles }: CommentsPageProps) {
   const [expandedArticles, setExpandedArticles] = useState<Set<number>>(new Set())
+  const [replyingTo, setReplyingTo] = useState<number | null>(null)
+  const [replyContent, setReplyContent] = useState('')
 
   const handleDelete = async (id: number) => {
     if (!confirm('确定要删除这条评论吗？')) return
@@ -925,9 +921,43 @@ function CommentsPage({ comments, setComments, articles }: CommentsPageProps) {
     }
   }
 
-  const getArticleTitle = (articleId: number) => {
-    const article = articles.find(a => a.id === articleId)
-    return article?.title || `文章 ID: ${articleId}`
+  const handleReply = async (parentId: number) => {
+    if (!replyContent.trim()) {
+      alert('请输入回复内容')
+      return
+    }
+
+    try {
+      // 获取父评论信息
+      const parentComment = comments.find(c => c.id === parentId)
+      if (!parentComment) return
+
+      const replyData = {
+        articleId: parentComment.articleId,
+        parentId: parentId,
+        authorName: '管理员',
+        content: replyContent,
+      }
+
+      await adminApi.comments.reply(parentId, replyData)
+      
+      // 重新加载评论
+      const updatedComments = await adminApi.comments.getAll()
+      setComments(updatedComments || [])
+      
+      // 清空表单并关闭回复框
+      setReplyContent('')
+      setReplyingTo(null)
+      alert('回复成功！')
+    } catch (err) {
+      console.error('Error replying to comment:', err)
+      alert('回复失败，请稍后重试')
+    }
+  }
+
+  const cancelReply = () => {
+    setReplyingTo(null)
+    setReplyContent('')
   }
 
   const toggleArticle = (articleId: number) => {
@@ -950,10 +980,40 @@ function CommentsPage({ comments, setComments, articles }: CommentsPageProps) {
     return acc
   }, {} as Record<number, Comment[]>)
 
+  // 构建树形结构
+  const buildCommentTree = (comments: Comment[]) => {
+    const commentMap = new Map<number, Comment & { children: Comment[] }>()
+    const rootComments: (Comment & { children: Comment[] })[] = []
+
+    // 初始化所有评论
+    comments.forEach(comment => {
+      commentMap.set(comment.id!, { ...comment, children: [] })
+    })
+
+    // 构建父子关系
+    comments.forEach(comment => {
+      const node = commentMap.get(comment.id!)!
+      if (comment.parentId) {
+        const parent = commentMap.get(comment.parentId)
+        if (parent) {
+          parent.children.push(node)
+        } else {
+          // 父评论不存在，作为根评论
+          rootComments.push(node)
+        }
+      } else {
+        rootComments.push(node)
+      }
+    })
+
+    return rootComments
+  }
+
   // 转换为数组并排序
   const articlesWithComments = Object.entries(groupedComments).map(([articleId, comments]) => ({
     article: articles.find(a => a.id === Number(articleId)),
     comments,
+    rootComments: buildCommentTree(comments), // 构建树形结构
     articleId: Number(articleId),
   })).filter(item => item.article).sort((a, b) => {
     // 按文章创建时间倒序
@@ -998,7 +1058,7 @@ function CommentsPage({ comments, setComments, articles }: CommentsPageProps) {
           </div>
 
           {/* 文章列表 */}
-          {articlesWithComments.map(({ articleId, article, comments: articleComments }) => (
+          {articlesWithComments.map(({ articleId, article, comments: articleComments, rootComments }) => (
             <div key={articleId} className="article-comment-group mb-4">
               {/* 文章标题栏（可点击展开/收起） */}
               <div 
@@ -1041,43 +1101,169 @@ function CommentsPage({ comments, setComments, articles }: CommentsPageProps) {
                         <th>内容</th>
                         <th style={{ width: '120px' }}>IP</th>
                         <th style={{ width: '160px' }}>创建时间</th>
-                        <th style={{ width: '80px' }}>操作</th>
+                        <th style={{ width: '100px' }}>操作</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {articleComments.map(comment => (
-                        <tr key={comment.id}>
-                          <td>{comment.id}</td>
-                          <td>
-                            <div className="author-info">
-                              <div className="author-name">{comment.authorName}</div>
-                              {comment.authorEmail && (
-                                <div className="author-email">{comment.authorEmail}</div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="comment-content">{comment.content}</td>
-                          <td className="ip-address">{comment.ip || '-'}</td>
-                          <td>
-                            {comment.createTime 
-                              ? new Date(comment.createTime).toLocaleString('zh-CN')
-                              : '-'}
-                          </td>
-                          <td>
-                            <div className="action-buttons">
-                              <button 
-                                className="btn-delete"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleDelete(comment.id!)
-                                }}
-                              >
-                                删除
-                              </button>
+                      {/* 渲染根评论及其回复 - 现在显示所有评论 */}
+                      {(() => {
+                        const renderCommentWithReplies = (
+                          rootComment: Comment
+                        ): any => {
+                          // 找到该根评论下的所有回复（按时间排序）
+                          const replies = articleComments.filter(c => 
+                            c.rootId === rootComment.id && c.id !== rootComment.id
+                          ).sort((a, b) => 
+                            new Date(a.createTime!).getTime() - new Date(b.createTime!).getTime()
+                          );
+
+                          return (
+                            <>
+                              {/* 根评论 */}
+                              <tr key={rootComment.id} style={{ background: 'white' }}>
+                                <td>
+                                  <span style={{ paddingLeft: '0px' }}>
+                                    {rootComment.id}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div className="author-info">
+                                    <div className="author-name">{rootComment.authorName}</div>
+                                    {rootComment.authorEmail && (
+                                      <div className="author-email">{rootComment.authorEmail}</div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="comment-content">{rootComment.content}</td>
+                                <td className="ip-address">{rootComment.ip || '-'}</td>
+                                <td>
+                                  {rootComment.createTime 
+                                    ? new Date(rootComment.createTime).toLocaleString('zh-CN')
+                                    : '-'}
+                                </td>
+                                <td>
+                                  <div className="action-buttons">
+                                    <button 
+                                      className="btn-reply mr-2"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setReplyingTo(rootComment.id!)
+                                      }}
+                                    >
+                                      💬 回复
+                                    </button>
+                                    <button 
+                                      className="btn-delete"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleDelete(rootComment.id!)
+                                      }}
+                                    >
+                                      删除
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                              {/* 所有回复（包括子评论的回复） */}
+                              {replies.map(reply => (
+                                <tr key={reply.id} style={{ background: '#f9fafb' }}>
+                                  <td>
+                                    <span style={{ paddingLeft: '20px' }}>
+                                      <span className="text-gray-400 mr-1">↳</span>
+                                      {reply.id}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <div className="author-info">
+                                      <div className="author-name">{reply.authorName}</div>
+                                      {reply.authorEmail && (
+                                        <div className="author-email">{reply.authorEmail}</div>
+                                      )}
+                                      {/* 显示回复对象 */}
+                                      {reply.parentId && (
+                                        <div className="reply-badge text-xs text-gray-500 mt-1">
+                                          回复 @{articleComments.find(c => c.id === reply.parentId)?.authorName || '用户'}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="comment-content">{reply.content}</td>
+                                  <td className="ip-address">{reply.ip || '-'}</td>
+                                  <td>
+                                    {reply.createTime 
+                                      ? new Date(reply.createTime).toLocaleString('zh-CN')
+                                      : '-'}
+                                  </td>
+                                  <td>
+                                    <div className="action-buttons">
+                                      <button 
+                                        className="btn-reply mr-2"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          setReplyingTo(reply.id!)
+                                        }}
+                                      >
+                                        💬 回复
+                                      </button>
+                                      <button 
+                                        className="btn-delete"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleDelete(reply.id!)
+                                        }}
+                                      >
+                                        删除
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </>
+                          );
+                        };
+
+                        return rootComments.map(root => 
+                          renderCommentWithReplies(root)
+                        );
+                      })()}
+                      {/* 回复输入框 */}
+                      {articleComments.some((c: Comment) => c.id === replyingTo) && (
+                        <tr className="reply-input-row">
+                          <td colSpan={6}>
+                            <div className="reply-form">
+                              <div className="reply-header">
+                                <span className="reply-label">回复评论：</span>
+                                <span className="reply-to-author">
+                                  @{comments.find(c => c.id === replyingTo)?.authorName || '用户'}
+                                </span>
+                              </div>
+                              <textarea
+                                className="reply-textarea"
+                                value={replyContent}
+                                onChange={(e) => setReplyContent(e.target.value)}
+                                placeholder="写下你的回复..."
+                                rows={3}
+                                autoFocus
+                              />
+                              <div className="reply-actions mt-2 flex gap-2">
+                                <button
+                                  className="btn-submit-reply"
+                                  onClick={() => handleReply(replyingTo!)}
+                                  disabled={!replyContent.trim()}
+                                >
+                                  提交回复
+                                </button>
+                                <button
+                                  className="btn-cancel-reply"
+                                  onClick={cancelReply}
+                                >
+                                  取消
+                                </button>
+                              </div>
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>

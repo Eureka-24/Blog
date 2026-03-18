@@ -1,5 +1,6 @@
 package com.blog.web.controller;
 
+import com.blog.core.dto.CommentDTO;
 import com.blog.core.entity.Comment;
 import com.blog.core.service.CommentService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +19,7 @@ public class CommentController {
     private final CommentService commentService;
 
     @GetMapping("/article/{articleId}")
-    public ResponseEntity<List<Comment>> getByArticle(@PathVariable Long articleId) {
+    public ResponseEntity<List<CommentDTO>> getByArticle(@PathVariable Long articleId) {
         return ResponseEntity.ok(commentService.getCommentsByArticleId(articleId));
     }
 

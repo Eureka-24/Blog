@@ -1,5 +1,6 @@
 package com.blog.admin.controller;
 
+import com.blog.core.dto.CommentDTO;
 import com.blog.core.entity.Comment;
 import com.blog.core.service.CommentService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class AdminCommentController {
     }
 
     @GetMapping("/article/{articleId}")
-    public ResponseEntity<List<Comment>> getByArticle(@PathVariable Long articleId) {
+    public ResponseEntity<List<CommentDTO>> getByArticle(@PathVariable Long articleId) {
         return ResponseEntity.ok(commentService.getCommentsByArticleId(articleId));
     }
 
@@ -34,7 +35,23 @@ public class AdminCommentController {
 
     @PostMapping("/{id}/approve")
     public ResponseEntity<Comment> approve(@PathVariable Long id) {
-        // TODO: 添加审核状态字段后实现
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{parentId}/reply")
+    public ResponseEntity<Comment> reply(@PathVariable Long parentId, @RequestBody Comment comment) {
+        try {
+            Comment parentComment = commentService.getById(parentId);
+            if (parentComment == null) {
+                return ResponseEntity.notFound().build();
+            }
+            comment.setParentId(parentId);
+            comment.setArticleId(parentComment.getArticleId());
+            // 使用 addComment 确保 rootId 正确设置
+            Comment saved = commentService.addComment(comment);
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

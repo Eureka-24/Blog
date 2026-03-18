@@ -17,6 +17,8 @@ public class Comment {
     
     private Long parentId;
     
+    private Long rootId;  // 根评论 ID
+    
     private String authorName;
     
     private String authorEmail;

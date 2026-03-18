@@ -1,4 +1,5 @@
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\config\MybatisPlusConfig.java
+D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\dto\CommentDTO.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\Article.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\ArticleTag.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\Category.java

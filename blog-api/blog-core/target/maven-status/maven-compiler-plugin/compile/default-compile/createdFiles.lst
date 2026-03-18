@@ -14,6 +14,7 @@ com\blog\core\service\impl\CategoryServiceImpl.class
 com\blog\core\entity\ArticleTag.class
 com\blog\core\mapper\ArticleTagMapper.class
 com\blog\core\service\impl\TagServiceImpl.class
+com\blog\core\dto\CommentDTO.class
 com\blog\core\entity\Category.class
 com\blog\core\service\CommentService.class
 com\blog\core\entity\Tag.class

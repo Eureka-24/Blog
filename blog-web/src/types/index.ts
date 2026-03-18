@@ -39,6 +39,7 @@ export interface Comment {
   id: number;
   articleId: number;
   parentId?: number | null;
+  rootId?: number | null;  // 根评论 ID
   authorName: string;
   authorEmail?: string | null;
   authorWebsite?: string | null;

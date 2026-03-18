@@ -765,6 +765,108 @@
   margin-top: 8px;
 }
 
+/* 回复功能样式 */
+.btn-reply {
+  padding: 6px 12px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.3s;
+}
+
+.btn-reply:hover {
+  background: #059669;
+}
+
+.reply-input-row {
+  background: #f9fafb;
+}
+
+.reply-form {
+  padding: 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin: 8px;
+}
+
+.reply-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.reply-label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.reply-to-author {
+  color: #409eff;
+  font-weight: 600;
+}
+
+.reply-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.3s;
+  background-color: white;
+  color: #1f2937;
+}
+
+.reply-textarea:focus {
+  outline: none;
+  border-color: #409eff;
+  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+}
+
+.btn-submit-reply {
+  padding: 8px 16px;
+  background: #409eff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.btn-submit-reply:hover:not(:disabled) {
+  background: #66b1ff;
+}
+
+.btn-submit-reply:disabled {
+  background: #a0cfff;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-cancel-reply {
+  padding: 8px 16px;
+  background: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.btn-cancel-reply:hover {
+  background: #e5e7eb;
+}
+
 .form-actions {
   display: flex;
   gap: 12px;
