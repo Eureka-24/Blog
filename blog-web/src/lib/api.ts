@@ -48,8 +48,12 @@ export async function request<T>(
 // Web API 方法
 export const articleApi = {
   // 获取文章列表（分页）
-  getArticles: (page: number = 1, size: number = 10) => 
-    request<PageResponse<Article>>(`/api/articles?page=${page}&size=${size}`),
+  getArticles: (page: number = 1, size: number = 10, categoryId?: number, tagId?: number) => {
+    let url = `/api/articles?page=${page}&size=${size}`;
+    if (categoryId) url += `&categoryId=${categoryId}`;
+    if (tagId) url += `&tagId=${tagId}`;
+    return request<PageResponse<Article>>(url);
+  },
   
   // 获取文章详情
   getArticle: (slug: string) => request<Article>(`/api/articles/${slug}`),

@@ -5,10 +5,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.blog.core.entity.Article;
 import com.blog.core.entity.ArticleTag;
+import com.blog.core.entity.Category;
 import com.blog.core.entity.Tag;
 import com.blog.core.mapper.ArticleMapper;
 import com.blog.core.mapper.ArticleTagMapper;
 import com.blog.core.service.ArticleService;
+import com.blog.core.service.CategoryService;
 import com.blog.core.service.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,25 +26,80 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     private final ArticleTagMapper articleTagMapper;
     private final TagService tagService;
+    private final CategoryService categoryService;
+
+    @Override
+    public List<Article> list() {
+        List<Article> articles = super.list();
+        // 为每篇文章加载 category 和 tags
+        for (Article article : articles) {
+            loadArticleRelations(article);
+        }
+        return articles;
+    }
 
     @Override
     public Page<Article> getPublishedArticles(int page, int size) {
-        return baseMapper.selectPublishedArticles(new Page<>(page, size));
+        Page<Article> articlePage = baseMapper.selectPublishedArticles(new Page<>(page, size));
+        // 为每篇文章加载 category 和 tags
+        for (Article article : articlePage.getRecords()) {
+            loadArticleRelations(article);
+        }
+        return articlePage;
     }
 
     @Override
     public Article getBySlug(String slug) {
-        return baseMapper.selectBySlug(slug);
+        Article article = baseMapper.selectBySlug(slug);
+        if (article != null) {
+            loadArticleRelations(article);
+        }
+        return article;
+    }
+
+    /**
+     * 加载文章的关联数据（分类和标签）
+     */
+    private void loadArticleRelations(Article article) {
+        // 加载分类
+        if (article.getCategoryId() != null) {
+            Category category = categoryService.getById(article.getCategoryId());
+            article.setCategory(category);
+        }
+        // 加载标签
+        List<Tag> tags = tagService.getTagsByArticleId(article.getId());
+        article.setTags(tags);
     }
 
     @Override
     public List<Article> getArticlesByTag(Long tagId) {
-        return baseMapper.selectByTagId(tagId);
+        List<Article> articles = baseMapper.selectByTagId(tagId);
+        for (Article article : articles) {
+            loadArticleRelations(article);
+        }
+        return articles;
+    }
+
+    @Override
+    public List<Article> getArticlesByCategory(Long categoryId) {
+        List<Article> articles = lambdaQuery()
+                .eq(Article::getCategoryId, categoryId)
+                .eq(Article::getStatus, 1)
+                .orderByDesc(Article::getCreateTime)
+                .list();
+        for (Article article : articles) {
+            loadArticleRelations(article);
+        }
+        return articles;
     }
 
     @Override
     public List<Article> getHotArticles(int limit) {
-        return baseMapper.selectHotArticles(limit);
+        List<Article> articles = baseMapper.selectHotArticles(limit);
+        for (Article article : articles) {
+            loadArticleRelations(article);
+        }
+        return articles;
     }
 
     @Override

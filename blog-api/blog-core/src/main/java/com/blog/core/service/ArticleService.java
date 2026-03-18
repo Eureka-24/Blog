@@ -14,6 +14,8 @@ public interface ArticleService extends IService<Article> {
     
     List<Article> getArticlesByTag(Long tagId);
     
+    List<Article> getArticlesByCategory(Long categoryId);
+    
     List<Article> getHotArticles(int limit);
     
     void incrementViewCount(Long articleId);

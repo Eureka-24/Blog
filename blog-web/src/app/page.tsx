@@ -11,31 +11,48 @@ export default function Home() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterCategory, setFilterCategory] = useState<number | null>(null);
+  const [filterTag, setFilterTag] = useState<number | null>(null);
+
+  // 加载数据
+  const fetchData = async (categoryId?: number, tagId?: number) => {
+    try {
+      setLoading(true);
+      // 并行获取数据
+      const [articlesRes, categoriesRes, tagsRes] = await Promise.all([
+        articleApi.getArticles(1, 10, categoryId, tagId),
+        categoryApi.getCategories(),
+        tagApi.getTags(),
+      ]);
+
+      setArticles(articlesRes.records || []);
+      setCategories(categoriesRes || []);
+      setTags(tagsRes || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '加载失败');
+      console.error('Error fetching data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        // 并行获取数据
-        const [articlesRes, categoriesRes, tagsRes] = await Promise.all([
-          articleApi.getArticles(1, 10),
-          categoryApi.getCategories(),
-          tagApi.getTags(),
-        ]);
-
-        setArticles(articlesRes.records || []);
-        setCategories(categoriesRes || []);
-        setTags(tagsRes || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '加载失败');
-        console.error('Error fetching data:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchData();
   }, []);
+
+  // 分类筛选
+  const handleCategoryClick = (categoryId: number | null) => {
+    setFilterCategory(categoryId);
+    setFilterTag(null);
+    fetchData(categoryId || undefined, undefined);
+  };
+
+  // 标签筛选
+  const handleTagClick = (tagId: number | null) => {
+    setFilterTag(tagId);
+    setFilterCategory(null);
+    fetchData(undefined, tagId || undefined);
+  };
 
   if (loading) {
     return (
@@ -166,6 +183,23 @@ export default function Home() {
 
           {/* 右侧边栏 */}
           <aside className="space-y-6">
+            {/* 当前筛选 */}
+            {(filterCategory || filterTag) && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">
+                    筛选：{filterCategory ? categories.find(c => c.id === filterCategory)?.name : tags.find(t => t.id === filterTag)?.name}
+                  </span>
+                  <button
+                    onClick={() => { setFilterCategory(null); setFilterTag(null); fetchData(); }}
+                    className="text-blue-600 hover:text-blue-700 text-sm"
+                  >
+                    清除
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* 分类 */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">分类</h2>
@@ -175,15 +209,17 @@ export default function Home() {
                 <ul className="space-y-2">
                   {categories.map((category) => (
                     <li key={category.id}>
-                      <a
-                        href="#"
-                        className="flex justify-between items-center text-gray-700 hover:text-blue-600"
+                      <button
+                        onClick={() => handleCategoryClick(category.id!)}
+                        className={`flex justify-between items-center w-full text-left ${
+                          filterCategory === category.id ? 'text-blue-600 font-medium' : 'text-gray-700 hover:text-blue-600'
+                        }`}
                       >
                         <span>{category.name}</span>
                         <span className="text-sm text-gray-500">
-                          ({category.description || ''})
+                          {category.description || ''}
                         </span>
-                      </a>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -198,12 +234,17 @@ export default function Home() {
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {tags.map((tag) => (
-                    <span
+                    <button
                       key={tag.id}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 cursor-pointer"
+                      onClick={() => handleTagClick(tag.id!)}
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                        filterTag === tag.id
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                      }`}
                     >
                       #{tag.name}
-                    </span>
+                    </button>
                   ))}
                 </div>
               )}

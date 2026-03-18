@@ -20,7 +20,24 @@ public class ArticleController {
     @GetMapping
     public ResponseEntity<Page<Article>> list(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long tagId) {
+        // 如果有筛选条件，使用筛选方法
+        if (tagId != null) {
+            List<Article> articles = articleService.getArticlesByTag(tagId);
+            Page<Article> result = new Page<>(page, size);
+            result.setRecords(articles);
+            result.setTotal(articles.size());
+            return ResponseEntity.ok(result);
+        }
+        if (categoryId != null) {
+            List<Article> articles = articleService.getArticlesByCategory(categoryId);
+            Page<Article> result = new Page<>(page, size);
+            result.setRecords(articles);
+            result.setTotal(articles.size());
+            return ResponseEntity.ok(result);
+        }
         return ResponseEntity.ok(articleService.getPublishedArticles(page, size));
     }
 

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { adminApi } from './lib/api'
 import type { Article, ArticleRequest, Category, Tag } from './types'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import './App.css'
 
 type Page = 'dashboard' | 'articles' | 'categories' | 'tags'
@@ -209,6 +211,16 @@ interface ArticlesPageProps {
 function ArticlesPage({ articles, setArticles, categories, tags }: ArticlesPageProps) {
   const [showForm, setShowForm] = useState(false)
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
+  const [filterCategory, setFilterCategory] = useState<number | null>(null)
+  const [filterTag, setFilterTag] = useState<number | null>(null)
+  const [previewArticle, setPreviewArticle] = useState<Article | null>(null)
+
+  // 筛选后的文章列表
+  const filteredArticles = articles.filter(article => {
+    if (filterCategory && article.categoryId !== filterCategory) return false
+    if (filterTag && !article.tags?.some(t => t.id === filterTag)) return false
+    return true
+  })
 
   const handleDelete = async (id: number) => {
     if (!confirm('确定要删除这篇文章吗？')) return
@@ -225,15 +237,51 @@ function ArticlesPage({ articles, setArticles, categories, tags }: ArticlesPageP
   return (
     <div className="page">
       <div className="page-header">
-        <button 
-          className="btn-primary"
-          onClick={() => {
-            setEditingArticle(null)
-            setShowForm(!showForm)
-          }}
-        >
-          {showForm ? '取消' : '+ 新建文章'}
-        </button>
+        <div className="filter-row">
+          <button 
+            className="btn-primary"
+            onClick={() => {
+              setEditingArticle(null)
+              setShowForm(!showForm)
+            }}
+          >
+            {showForm ? '取消' : '+ 新建文章'}
+          </button>
+          
+          <div className="filters">
+            <select
+              value={filterCategory || ''}
+              onChange={(e) => setFilterCategory(e.target.value ? Number(e.target.value) : null)}
+            >
+              <option value="">全部分类</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+            
+            <select
+              value={filterTag || ''}
+              onChange={(e) => setFilterTag(e.target.value ? Number(e.target.value) : null)}
+            >
+              <option value="">全部标签</option>
+              {tags.map(tag => (
+                <option key={tag.id} value={tag.id}>{tag.name}</option>
+              ))}
+            </select>
+            
+            {(filterCategory || filterTag) && (
+              <button 
+                className="btn-clear-filter"
+                onClick={() => {
+                  setFilterCategory(null)
+                  setFilterTag(null)
+                }}
+              >
+                清除筛选
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {showForm && (
@@ -249,8 +297,27 @@ function ArticlesPage({ articles, setArticles, categories, tags }: ArticlesPageP
         />
       )}
 
-      {articles.length === 0 ? (
-        <p className="empty-state">暂无文章</p>
+      {/* Markdown 预览弹窗 */}
+      {previewArticle && (
+        <div className="preview-modal" onClick={() => setPreviewArticle(null)}>
+          <div className="preview-content" onClick={(e) => e.stopPropagation()}>
+            <div className="preview-header">
+              <h3>{previewArticle.title}</h3>
+              <button className="btn-close" onClick={() => setPreviewArticle(null)}>×</button>
+            </div>
+            <div className="preview-body">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {previewArticle.content || ''}
+              </ReactMarkdown>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {filteredArticles.length === 0 ? (
+        <p className="empty-state">
+          {articles.length === 0 ? '暂无文章' : '没有符合条件的文章'}
+        </p>
       ) : (
         <table className="data-table">
           <thead>
@@ -258,6 +325,7 @@ function ArticlesPage({ articles, setArticles, categories, tags }: ArticlesPageP
               <th>ID</th>
               <th>标题</th>
               <th>分类</th>
+              <th>标签</th>
               <th>状态</th>
               <th>阅读量</th>
               <th>创建时间</th>
@@ -265,11 +333,22 @@ function ArticlesPage({ articles, setArticles, categories, tags }: ArticlesPageP
             </tr>
           </thead>
           <tbody>
-            {articles.map(article => (
+            {filteredArticles.map(article => (
               <tr key={article.id}>
                 <td>{article.id}</td>
                 <td>{article.title}</td>
                 <td>{article.category?.name || '-'}</td>
+                <td>
+                  <div className="article-tags">
+                    {article.tags && article.tags.length > 0 ? (
+                      article.tags.map(tag => (
+                        <span key={tag.id} className="article-tag">{tag.name}</span>
+                      ))
+                    ) : (
+                      <span className="no-tag">-</span>
+                    )}
+                  </div>
+                </td>
                 <td>
                   <span className={`status-badge ${article.status === 1 ? 'published' : 'draft'}`}>
                     {article.status === 1 ? '已发布' : '草稿'}
@@ -283,6 +362,12 @@ function ArticlesPage({ articles, setArticles, categories, tags }: ArticlesPageP
                 </td>
                 <td>
                   <div className="action-buttons">
+                    <button 
+                      className="btn-preview"
+                      onClick={() => setPreviewArticle(article)}
+                    >
+                      预览
+                    </button>
                     <button 
                       className="btn-edit"
                       onClick={() => {

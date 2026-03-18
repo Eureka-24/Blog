@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { articleApi } from '@/lib/api';
 import type { Article } from '@/types';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function ArticleDetail() {
   const params = useParams();
@@ -132,10 +134,11 @@ export default function ArticleDetail() {
             )}
 
             {/* 文章内容 */}
-            <div 
-              className="prose prose-lg max-w-none"
-              dangerouslySetInnerHTML={{ __html: article.content }}
-            />
+            <div className="prose prose-lg max-w-none markdown-body">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {article.content || ''}
+              </ReactMarkdown>
+            </div>
 
             {/* 分享区域 */}
             <div className="border-t mt-8 pt-6">
