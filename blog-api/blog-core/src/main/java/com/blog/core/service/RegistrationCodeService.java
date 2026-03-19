@@ -43,4 +43,10 @@ public interface RegistrationCodeService extends IService<RegistrationCode> {
      * @return 是否成功
      */
     boolean deleteCode(Long id);
+    
+    /**
+     * 清理过期且已使用的注册码
+     * @return 删除的记录数
+     */
+    int cleanupExpiredCodes();
 }

@@ -38,6 +38,13 @@ export async function request<T>(
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
+    // 处理空响应（如 DELETE 请求返回 204）
+    const contentType = response.headers.get('content-type');
+    const contentLength = response.headers.get('content-length');
+    if (response.status === 204 || contentLength === '0' || !contentType?.includes('application/json')) {
+      return undefined as T;
+    }
+
     return await response.json();
   } catch (error) {
     console.error('API request failed:', error);

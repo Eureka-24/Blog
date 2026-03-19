@@ -72,14 +72,20 @@
   border-radius: 8px;
   font-size: 15px;
   transition: all 0.2s;
-  background: #f9fafb;
+  background: #ffffff;
+  color: #000000;
 }
 
 .input:focus {
   outline: none;
   border-color: #667eea;
-  background: white;
+  background: #ffffff;
+  color: #000000;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.input::placeholder {
+  color: #9ca3af;
 }
 
 .input:disabled {

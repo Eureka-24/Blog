@@ -85,6 +85,37 @@ public class RegistrationCodeServiceImpl extends ServiceImpl<RegistrationCodeMap
         return result > 0;
     }
     
+    @Override
+    public int cleanupExpiredCodes() {
+        // 删除已过期且已使用的注册码（保留7天内的记录用于审计）
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+        
+        // 使用MyBatis-Plus的lambda查询构建删除条件
+        int deletedCount = baseMapper.delete(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<RegistrationCode>()
+                .and(wrapper -> wrapper
+                    .eq(RegistrationCode::getIsUsed, true)
+                    .lt(RegistrationCode::getUsedTime, sevenDaysAgo)
+                )
+        );
+        
+        // 同时删除已过期但未使用的注册码（超过7天）
+        int expiredUnusedCount = baseMapper.delete(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<RegistrationCode>()
+                .and(wrapper -> wrapper
+                    .eq(RegistrationCode::getIsUsed, false)
+                    .lt(RegistrationCode::getExpireTime, sevenDaysAgo)
+                )
+        );
+        
+        int totalDeleted = deletedCount + expiredUnusedCount;
+        if (totalDeleted > 0) {
+            log.info("清理注册码完成：已使用且超过7天的 {} 条，过期未使用且超过7天的 {} 条", 
+                deletedCount, expiredUnusedCount);
+        }
+        return totalDeleted;
+    }
+    
     private String generateRandomCode() {
         StringBuilder sb = new StringBuilder(CODE_LENGTH);
         for (int i = 0; i < CODE_LENGTH; i++) {

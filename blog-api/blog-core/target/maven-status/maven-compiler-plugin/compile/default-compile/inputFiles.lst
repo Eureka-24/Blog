@@ -1,4 +1,5 @@
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\config\MybatisPlusConfig.java
+D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\config\ScheduledTaskConfig.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\dto\CommentDTO.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\dto\LoginRequest.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\dto\LoginResponse.java

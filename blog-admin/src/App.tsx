@@ -1305,10 +1305,31 @@ function RegistrationCodesPage({ codes, setCodes }: RegistrationCodesPageProps) 
     }
   }
 
+  // 辅助函数：安全解析时间字符串
+  const parseDate = (dateStr: string): Date => {
+    if (!dateStr) return new Date()
+    // 处理多种时间格式
+    if (dateStr.includes('T')) {
+      return new Date(dateStr)
+    }
+    // 处理 "2024-01-15 10:30:00" 格式
+    return new Date(dateStr.replace(' ', 'T'))
+  }
+
   const getTypeText = (type: number) => type === 1 ? '管理员码' : '普通用户码'
   const getStatusText = (code: RegistrationCode) => {
     if (code.isUsed) return '已使用'
-    if (new Date(code.expireTime) < new Date()) return '已过期'
+    const expireTime = parseDate(code.expireTime)
+    const now = new Date()
+    
+    // 调试信息
+    console.log('Code:', code.code, 'expireTime raw:', code.expireTime, 'parsed:', expireTime, 'now:', now, 'isExpired:', expireTime < now)
+    
+    if (isNaN(expireTime.getTime())) {
+      console.warn('Invalid expireTime:', code.expireTime)
+      return '未知'
+    }
+    if (expireTime < now) return '已过期'
     return '有效'
   }
 
@@ -1376,9 +1397,9 @@ function RegistrationCodesPage({ codes, setCodes }: RegistrationCodesPageProps) 
                       {getStatusText(code)}
                     </span>
                   </td>
-                  <td>{new Date(code.expireTime).toLocaleString('zh-CN')}</td>
+                  <td>{parseDate(code.expireTime).toLocaleString('zh-CN')}</td>
                   <td>{code.usedBy || '-'}</td>
-                  <td>{code.usedTime ? new Date(code.usedTime).toLocaleString('zh-CN') : '-'}</td>
+                  <td>{code.usedTime ? parseDate(code.usedTime).toLocaleString('zh-CN') : '-'}</td>
                   <td>
                     <button className="btn-delete" onClick={() => handleDelete(code.id!)}>
                       删除

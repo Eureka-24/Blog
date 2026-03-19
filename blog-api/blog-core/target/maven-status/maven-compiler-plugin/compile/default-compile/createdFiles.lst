@@ -1,3 +1,4 @@
+com\blog\core\config\ScheduledTaskConfig.class
 com\blog\core\service\CategoryService.class
 com\blog\core\entity\Article.class
 com\blog\core\mapper\UserMapper.class
