@@ -1,4 +1,4 @@
-import type { Article, Category, Tag, PageResponse, Comment } from '@/types';
+import type { Article, Category, Tag, PageResponse, Comment, User } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:8081';
@@ -44,6 +44,30 @@ export async function request<T>(
     throw error;
   }
 }
+
+// 带认证的请求函数
+export async function requestWithAuth<T>(
+  endpoint: string,
+  options: RequestOptions = {},
+  isAdminApi: boolean = false
+): Promise<T> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const headers = {
+    ...options.headers,
+    ...(token ? { 'Authorization': token } : {}),
+  };
+  return request<T>(endpoint, { ...options, headers }, isAdminApi);
+}
+
+// 认证 API
+export const authApi = {
+  login: (data: { username: string; password: string }) => request<{ token: string; user: User }>('/api/auth/login', {
+    method: 'POST',
+    data,
+  }, true),
+  getCurrentUser: () => requestWithAuth<User>('/api/auth/me', {}, true),
+  logout: () => requestWithAuth<void>('/api/auth/logout', { method: 'POST' }, true),
+};
 
 // Web API 方法
 export const articleApi = {

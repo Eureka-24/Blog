@@ -2,6 +2,15 @@
  * 数据类型定义
  */
 
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  nickname?: string;
+  avatar?: string;
+  role: number; // 0:普通用户 1:管理员
+}
+
 export interface Article {
   id: number;
   title: string;

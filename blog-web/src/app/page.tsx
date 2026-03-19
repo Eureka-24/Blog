@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { articleApi, categoryApi, tagApi } from '@/lib/api';
-import type { Article, Category, Tag } from '@/types';
+import type { Article, Category, Tag, User } from '@/types';
+import LoginModal from '@/components/LoginModal';
 
 export default function Home() {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -13,6 +14,34 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<number | null>(null);
   const [filterTag, setFilterTag] = useState<number | null>(null);
+  
+  // 登录状态
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // 检查登录状态
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    if (token && user) {
+      setCurrentUser(JSON.parse(user));
+    }
+  }, []);
+
+  // 登录成功回调
+  const handleLoginSuccess = (user: User, token: string) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    setCurrentUser(user);
+    setShowLoginModal(false);
+  };
+
+  // 退出登录
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setCurrentUser(null);
+  };
 
   // 加载数据
   const fetchData = async (categoryId?: number, tagId?: number) => {
@@ -85,13 +114,43 @@ export default function Home() {
             <Link href="/" className="text-2xl font-bold text-gray-900">
               我的博客
             </Link>
-            <nav className="flex space-x-6">
+            <nav className="flex space-x-6 items-center">
               <Link href="/" className="text-gray-600 hover:text-gray-900">
                 首页
               </Link>
               <a href="#" className="text-gray-600 hover:text-gray-900">
                 关于
               </a>
+              {/* 管理员入口 - 仅管理员可见 */}
+              {currentUser && currentUser.role === 1 && (
+                <a 
+                  href={process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:5173'} 
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  管理后台
+                </a>
+              )}
+              {/* 用户状态 */}
+              {currentUser ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600">
+                    {currentUser.nickname || currentUser.username}
+                  </span>
+                  <button 
+                    onClick={handleLogout} 
+                    className="text-sm text-red-600 hover:text-red-700"
+                  >
+                    退出
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setShowLoginModal(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  登录
+                </button>
+              )}
             </nav>
           </div>
         </div>
@@ -261,6 +320,13 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* 登录弹窗 */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   );
 }

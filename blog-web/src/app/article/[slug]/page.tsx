@@ -4,9 +4,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { articleApi, commentApi } from '@/lib/api';
-import type { Article, Comment } from '@/types';
+import type { Article, Comment, User } from '@/types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import LoginModal from '@/components/LoginModal';
 
 export default function ArticleDetail() {
   const params = useParams();
@@ -16,6 +17,34 @@ export default function ArticleDetail() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // 登录状态
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // 检查登录状态
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    if (token && user) {
+      setCurrentUser(JSON.parse(user));
+    }
+  }, []);
+
+  // 登录成功回调
+  const handleLoginSuccess = (user: User, token: string) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    setCurrentUser(user);
+    setShowLoginModal(false);
+  };
+
+  // 退出登录
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setCurrentUser(null);
+  };
 
   useEffect(() => {
     async function fetchArticle() {
@@ -184,7 +213,9 @@ export default function ArticleDetail() {
           <CommentSection 
             articleId={article.id} 
             comments={comments} 
-            setComments={setComments} 
+            setComments={setComments}
+            currentUser={currentUser}
+            onShowLogin={() => setShowLoginModal(true)}
           />
         </div>
       </main>
@@ -197,6 +228,13 @@ export default function ArticleDetail() {
           </div>
         </div>
       </footer>
+
+      {/* 登录弹窗 */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   );
 }
@@ -206,9 +244,11 @@ interface CommentSectionProps {
   articleId: number;
   comments: Comment[];
   setComments: (comments: Comment[]) => void;
+  currentUser: User | null;
+  onShowLogin: () => void;
 }
 
-function CommentSection({ articleId, comments, setComments }: CommentSectionProps) {
+function CommentSection({ articleId, comments, setComments, currentUser, onShowLogin }: CommentSectionProps) {
   const [newComment, setNewComment] = useState({
     authorName: '',
     authorEmail: '',
@@ -217,6 +257,17 @@ function CommentSection({ articleId, comments, setComments }: CommentSectionProp
   const [submitting, setSubmitting] = useState(false);
   const [replyTo, setReplyTo] = useState<{ id: number; authorName: string } | null>(null);
   const [placeholder, setPlaceholder] = useState('写下你的评论...');
+
+  // 自动填充已登录用户的名称和邮箱
+  useEffect(() => {
+    if (currentUser) {
+      setNewComment(prev => ({
+        ...prev,
+        authorName: currentUser.nickname || currentUser.username,
+        authorEmail: currentUser.email,
+      }));
+    }
+  }, [currentUser]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -400,69 +451,80 @@ function CommentSection({ articleId, comments, setComments }: CommentSectionProp
       <form onSubmit={handleSubmit} className="border-t pt-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">发表评论</h3>
         
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="authorName" className="block text-sm font-medium text-gray-700 mb-1">
-              昵称 *
-            </label>
-            <input
-              type="text"
-              id="authorName"
-              value={newComment.authorName}
-              onChange={(e) => setNewComment({ ...newComment, authorName: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
-              placeholder="请输入昵称"
-              required
-            />
+        {/* 未登录时显示登录提示 */}
+        {!currentUser ? (
+          <div className="text-center py-6">
+            <p className="text-gray-500 mb-4">登录后可发表评论</p>
+            <button
+              type="button"
+              onClick={onShowLogin}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              登录
+            </button>
           </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="authorName" className="block text-sm font-medium text-gray-700 mb-1">
+                昵称
+              </label>
+              <input
+                type="text"
+                id="authorName"
+                value={newComment.authorName}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
+              />
+            </div>
 
-          <div>
-            <label htmlFor="authorEmail" className="block text-sm font-medium text-gray-700 mb-1">
-              邮箱（可选）
-            </label>
-            <input
-              type="email"
-              id="authorEmail"
-              value={newComment.authorEmail}
-              onChange={(e) => setNewComment({ ...newComment, authorEmail: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
-              placeholder="your@email.com"
-            />
+            <div>
+              <label htmlFor="authorEmail" className="block text-sm font-medium text-gray-700 mb-1">
+                邮箱
+              </label>
+              <input
+                type="email"
+                id="authorEmail"
+                value={newComment.authorEmail}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
+                评论内容 *
+              </label>
+              <textarea
+                id="content"
+                value={newComment.content}
+                onChange={(e) => setNewComment({ ...newComment, content: e.target.value })}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+                placeholder={placeholder}
+                required
+              />
+              {/* 取消回复按钮 */}
+              {replyTo && (
+                <button
+                  type="button"
+                  onClick={cancelReply}
+                  className="mt-2 text-sm text-gray-600 hover:text-gray-800"
+                >
+                  ✕ 取消回复
+                </button>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {submitting ? '提交中...' : '发表评论'}
+            </button>
           </div>
-
-          <div>
-            <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
-              评论内容 *
-            </label>
-            <textarea
-              id="content"
-              value={newComment.content}
-              onChange={(e) => setNewComment({ ...newComment, content: e.target.value })}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
-              placeholder={placeholder}
-              required
-            />
-            {/* 取消回复按钮 */}
-            {replyTo && (
-              <button
-                type="button"
-                onClick={cancelReply}
-                className="mt-2 text-sm text-gray-600 hover:text-gray-800"
-              >
-                ✕ 取消回复
-              </button>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
-          >
-            {submitting ? '提交中...' : '发表评论'}
-          </button>
-        </div>
+        )}
       </form>
     </div>
   );

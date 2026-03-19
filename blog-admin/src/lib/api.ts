@@ -45,8 +45,32 @@ export async function request<T>(
   }
 }
 
+// 带认证的请求函数
+export async function requestWithAuth<T>(
+  endpoint: string,
+  options: RequestOptions = {},
+  isWebApi: boolean = false
+): Promise<T> {
+  const token = localStorage.getItem('token');
+  const headers = {
+    ...options.headers,
+    ...(token ? { 'Authorization': token } : {}),
+  };
+  return request<T>(endpoint, { ...options, headers }, isWebApi);
+}
+
 // Admin API 方法
 export const adminApi = {
+  // 认证
+  auth: {
+    login: (data: { username: string; password: string }) => request<{ token: string; user: any }>('/api/auth/login', {
+      method: 'POST',
+      data,
+    }),
+    getCurrentUser: () => requestWithAuth<any>('/api/auth/me'),
+    logout: () => requestWithAuth<void>('/api/auth/logout', { method: 'POST' }),
+  },
+  
   // 文章管理
   articles: {
     getAll: () => request<Article[]>('/api/admin/articles'),

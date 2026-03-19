@@ -1,5 +1,6 @@
 com\blog\admin\controller\AdminArticleController.class
 com\blog\admin\dto\ArticleRequest.class
+com\blog\admin\controller\AuthController.class
 com\blog\admin\controller\AdminCommentController.class
 com\blog\admin\AdminApiApplication.class
 com\blog\admin\controller\AdminCategoryController.class

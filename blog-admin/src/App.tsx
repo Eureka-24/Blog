@@ -3,6 +3,7 @@ import { adminApi } from './lib/api'
 import type { Article, ArticleRequest, Category, Tag, Comment } from './types'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import LoginPage from './components/LoginPage'
 import './App.css'
 
 type Page = 'dashboard' | 'articles' | 'categories' | 'tags' | 'comments'
@@ -15,8 +16,22 @@ function App() {
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // 登录状态
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [currentUser, setCurrentUser] = useState<any>(null)
 
-  // 加载数据
+  // 检查登录状态
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const user = localStorage.getItem('user')
+    if (token && user) {
+      setIsAuthenticated(true)
+      setCurrentUser(JSON.parse(user))
+    }
+  }, [])
+
+  // 加载数据函数
   const loadData = async () => {
     setLoading(true)
     setError(null)
@@ -40,9 +55,39 @@ function App() {
     }
   }
 
+  // 只有在已登录状态下才加载数据（必须在条件返回之前）
   useEffect(() => {
-    loadData()
-  }, [])
+    if (isAuthenticated) {
+      loadData()
+    }
+  }, [isAuthenticated])
+
+  // 登录成功回调
+  const handleLoginSuccess = (user: any, token: string) => {
+    localStorage.setItem('token', token)
+    localStorage.setItem('user', JSON.stringify(user))
+    setIsAuthenticated(true)
+    setCurrentUser(user)
+  }
+
+  // 退出登录
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setIsAuthenticated(false)
+    setCurrentUser(null)
+    // 清空数据
+    setArticles([])
+    setCategories([])
+    setTags([])
+    setComments([])
+    setError(null)
+  }
+
+  // 未登录时显示登录页面
+  if (!isAuthenticated) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />
+  }
 
   // 渲染不同页面
   const renderPage = () => {
@@ -68,6 +113,12 @@ function App() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <h1>博客管理系统</h1>
+          <div className="user-info">
+            <span className="user-name">👤 {currentUser?.nickname || currentUser?.username}</span>
+            <button className="logout-btn" onClick={handleLogout}>
+              退出
+            </button>
+          </div>
         </div>
         <nav className="sidebar-nav">
           <button
@@ -906,8 +957,6 @@ interface CommentsPageProps {
 
 function CommentsPage({ comments, setComments, articles }: CommentsPageProps) {
   const [expandedArticles, setExpandedArticles] = useState<Set<number>>(new Set())
-  const [replyingTo, setReplyingTo] = useState<number | null>(null)
-  const [replyContent, setReplyContent] = useState('')
 
   const handleDelete = async (id: number) => {
     if (!confirm('确定要删除这条评论吗？')) return
@@ -919,45 +968,6 @@ function CommentsPage({ comments, setComments, articles }: CommentsPageProps) {
       alert('删除失败')
       console.error('Error deleting comment:', err)
     }
-  }
-
-  const handleReply = async (parentId: number) => {
-    if (!replyContent.trim()) {
-      alert('请输入回复内容')
-      return
-    }
-
-    try {
-      // 获取父评论信息
-      const parentComment = comments.find(c => c.id === parentId)
-      if (!parentComment) return
-
-      const replyData = {
-        articleId: parentComment.articleId,
-        parentId: parentId,
-        authorName: '管理员',
-        content: replyContent,
-      }
-
-      await adminApi.comments.reply(parentId, replyData)
-      
-      // 重新加载评论
-      const updatedComments = await adminApi.comments.getAll()
-      setComments(updatedComments || [])
-      
-      // 清空表单并关闭回复框
-      setReplyContent('')
-      setReplyingTo(null)
-      alert('回复成功！')
-    } catch (err) {
-      console.error('Error replying to comment:', err)
-      alert('回复失败，请稍后重试')
-    }
-  }
-
-  const cancelReply = () => {
-    setReplyingTo(null)
-    setReplyContent('')
   }
 
   const toggleArticle = (articleId: number) => {
@@ -1144,15 +1154,6 @@ function CommentsPage({ comments, setComments, articles }: CommentsPageProps) {
                                 <td>
                                   <div className="action-buttons">
                                     <button 
-                                      className="btn-reply mr-2"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        setReplyingTo(rootComment.id!)
-                                      }}
-                                    >
-                                      💬 回复
-                                    </button>
-                                    <button 
                                       className="btn-delete"
                                       onClick={(e) => {
                                         e.stopPropagation()
@@ -1197,15 +1198,6 @@ function CommentsPage({ comments, setComments, articles }: CommentsPageProps) {
                                   <td>
                                     <div className="action-buttons">
                                       <button 
-                                        className="btn-reply mr-2"
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          setReplyingTo(reply.id!)
-                                        }}
-                                      >
-                                        💬 回复
-                                      </button>
-                                      <button 
                                         className="btn-delete"
                                         onClick={(e) => {
                                           e.stopPropagation()
@@ -1226,44 +1218,6 @@ function CommentsPage({ comments, setComments, articles }: CommentsPageProps) {
                           renderCommentWithReplies(root)
                         );
                       })()}
-                      {/* 回复输入框 */}
-                      {articleComments.some((c: Comment) => c.id === replyingTo) && (
-                        <tr className="reply-input-row">
-                          <td colSpan={6}>
-                            <div className="reply-form">
-                              <div className="reply-header">
-                                <span className="reply-label">回复评论：</span>
-                                <span className="reply-to-author">
-                                  @{comments.find(c => c.id === replyingTo)?.authorName || '用户'}
-                                </span>
-                              </div>
-                              <textarea
-                                className="reply-textarea"
-                                value={replyContent}
-                                onChange={(e) => setReplyContent(e.target.value)}
-                                placeholder="写下你的回复..."
-                                rows={3}
-                                autoFocus
-                              />
-                              <div className="reply-actions mt-2 flex gap-2">
-                                <button
-                                  className="btn-submit-reply"
-                                  onClick={() => handleReply(replyingTo!)}
-                                  disabled={!replyContent.trim()}
-                                >
-                                  提交回复
-                                </button>
-                                <button
-                                  className="btn-cancel-reply"
-                                  onClick={cancelReply}
-                                >
-                                  取消
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
                     </tbody>
                   </table>
                 </div>
