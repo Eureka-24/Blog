@@ -83,6 +83,47 @@ CREATE INDEX idx_comment_root ON comment(root_id);
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_email ON users(email);
 
+CREATE TABLE IF NOT EXISTS registration_codes (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(32) NOT NULL UNIQUE,
+    type INTEGER NOT NULL DEFAULT 0,
+    expire_time TIMESTAMP NOT NULL,
+    is_used BOOLEAN NOT NULL DEFAULT FALSE,
+    used_by BIGINT,
+    used_time TIMESTAMP,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE registration_codes IS '注册码表';
+COMMENT ON COLUMN registration_codes.code IS '注册码';
+COMMENT ON COLUMN registration_codes.type IS '类型：0-普通用户码，1-管理员码';
+COMMENT ON COLUMN registration_codes.expire_time IS '过期时间';
+COMMENT ON COLUMN registration_codes.is_used IS '是否已使用';
+COMMENT ON COLUMN registration_codes.used_by IS '使用用户ID';
+COMMENT ON COLUMN registration_codes.used_time IS '使用时间';
+
+CREATE INDEX IF NOT EXISTS idx_code ON registration_codes(code);
+CREATE INDEX IF NOT EXISTS idx_expire_time ON registration_codes(expire_time);
+
+
+-- 图片表
+CREATE TABLE IF NOT EXISTS image (
+    id BIGSERIAL PRIMARY KEY,
+    article_id BIGINT REFERENCES article(id) ON DELETE CASCADE,
+    original_name VARCHAR(255) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    thumbnail_path VARCHAR(500),
+    file_size BIGINT NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    width INTEGER,
+    height INTEGER,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_image_article ON image(article_id);
+
 -- 插入默认数据
 INSERT INTO category (name, slug, description, sort_order) VALUES
 ('技术', 'tech', '技术文章', 1),

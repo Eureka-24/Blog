@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { Article } from '@/types'
+import { getImageUrl } from '@/lib/api'
 
 interface ArticleCardProps {
   article: Article
@@ -16,7 +17,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
       {article.coverImage && (
         <div className="relative h-48 bg-gray-200">
           <img
-            src={article.coverImage}
+            src={getImageUrl(article.coverImage)}
             alt={article.title}
             className="w-full h-full object-cover"
           />

@@ -3,6 +3,23 @@ import type { Article, Category, Tag, PageResponse, Comment, User } from '@/type
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:8081';
 
+/**
+ * 获取完整的图片URL
+ * 如果是相对路径（以/开头），则添加API基础URL
+ */
+export function getImageUrl(path: string | null | undefined): string | undefined {
+  if (!path) return undefined;
+  // 如果已经是完整URL（http/https），直接返回
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  // 如果是相对路径，添加API基础URL
+  if (path.startsWith('/')) {
+    return `${API_BASE_URL}${path}`;
+  }
+  return path;
+}
+
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   data?: any;

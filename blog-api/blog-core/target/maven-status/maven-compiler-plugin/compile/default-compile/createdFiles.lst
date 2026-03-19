@@ -1,4 +1,5 @@
 com\blog\core\config\ScheduledTaskConfig.class
+com\blog\core\service\impl\ImageServiceImpl.class
 com\blog\core\service\CategoryService.class
 com\blog\core\entity\Article.class
 com\blog\core\mapper\UserMapper.class
@@ -14,6 +15,7 @@ com\blog\core\entity\Category.class
 com\blog\core\entity\RegistrationCode.class
 com\blog\core\entity\Tag.class
 com\blog\core\service\impl\CommentServiceImpl.class
+com\blog\core\service\ImageService.class
 com\blog\core\service\impl\RegistrationCodeServiceImpl.class
 com\blog\core\config\MybatisPlusConfig.class
 com\blog\core\mapper\CommentMapper.class
@@ -23,9 +25,11 @@ com\blog\core\service\TagService.class
 com\blog\core\dto\LoginRequest.class
 com\blog\core\mapper\ArticleMapper.class
 com\blog\core\service\RegistrationCodeService.class
+com\blog\core\entity\Image.class
 com\blog\core\mapper\CategoryMapper.class
 com\blog\core\mapper\TagMapper.class
 com\blog\core\dto\LoginResponse.class
+com\blog\core\mapper\ImageMapper.class
 com\blog\core\entity\ArticleTag.class
 com\blog\core\mapper\ArticleTagMapper.class
 com\blog\core\mapper\RegistrationCodeMapper.class

@@ -3,6 +3,7 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Article } from '@/types'
+import { getImageUrl } from '@/lib/api'
 
 interface ArticleContentProps {
   article: Article
@@ -15,7 +16,7 @@ export default function ArticleContent({ article }: ArticleContentProps) {
       {article.coverImage && (
         <div className="relative h-64 sm:h-96 bg-gray-200">
           <img
-            src={article.coverImage}
+            src={getImageUrl(article.coverImage)}
             alt={article.title}
             className="w-full h-full object-cover"
           />

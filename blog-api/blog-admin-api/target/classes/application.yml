@@ -38,3 +38,15 @@ mybatis-plus:
 logging:
   level:
     com.blog: debug
+
+# 文件上传配置
+app:
+  upload:
+    path: /uploads/images
+    thumbnail:
+      width: 300
+      height: 200
+
+# 文件上传大小限制
+spring.servlet.multipart.max-file-size: 5MB
+spring.servlet.multipart.max-request-size: 20MB

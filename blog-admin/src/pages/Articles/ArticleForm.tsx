@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { adminApi } from '../../lib/api'
+import { adminApi, getImageUrl } from '../../lib/api'
 import type { Article, Category, Tag } from '../../types'
+import ImageUploader from '../../components/common/ImageUploader'
 
 interface ArticleFormProps {
   article?: Article | null
@@ -23,6 +24,7 @@ export default function ArticleForm({ article, categories, tags, onSuccess, onCa
     article?.tags?.map(t => t.id!) || []
   )
   const [submitting, setSubmitting] = useState(false)
+  const [showImageUploader, setShowImageUploader] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -127,6 +129,15 @@ export default function ArticleForm({ article, categories, tags, onSuccess, onCa
 
       <div className="form-group">
         <label>内容 *</label>
+        <div className="content-toolbar">
+          <button 
+            type="button" 
+            className="btn-toolbar"
+            onClick={() => setShowImageUploader(!showImageUploader)}
+          >
+            {showImageUploader ? '隐藏图片库' : '插入图片'}
+          </button>
+        </div>
         <textarea
           value={formData.content}
           onChange={(e) => setFormData({ ...formData, content: e.target.value })}
@@ -134,16 +145,50 @@ export default function ArticleForm({ article, categories, tags, onSuccess, onCa
           required
           placeholder="支持 Markdown 格式"
         />
+        {showImageUploader && (
+          <ImageUploader
+            articleId={article?.id}
+            onImageSelect={(url) => {
+              const imageMarkdown = `![图片](${url})`
+              setFormData(prev => ({
+                ...prev,
+                content: prev.content ? `${prev.content}\n${imageMarkdown}` : imageMarkdown
+              }))
+            }}
+            onCoverSelect={(url) => {
+              setFormData(prev => ({ ...prev, coverImage: url }))
+            }}
+            selectedCoverUrl={formData.coverImage || undefined}
+          />
+        )}
       </div>
 
       <div className="form-group">
-        <label>封面图片 URL</label>
-        <input
-          type="url"
-          value={formData.coverImage || ''}
-          onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-          placeholder="https://example.com/image.jpg"
-        />
+        <label>封面图片</label>
+        <div className="cover-image-section">
+          {formData.coverImage ? (
+            <div className="cover-preview">
+              <img src={getImageUrl(formData.coverImage)} alt="封面预览" />
+              <button 
+                type="button" 
+                className="btn-remove-cover"
+                onClick={() => setFormData({ ...formData, coverImage: '' })}
+              >
+                移除
+              </button>
+            </div>
+          ) : (
+            <div className="cover-placeholder">
+              <span>暂无封面</span>
+            </div>
+          )}
+          <input
+            type="url"
+            value={formData.coverImage || ''}
+            onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
+            placeholder="输入图片URL或从下方选择"
+          />
+        </div>
       </div>
 
       <div className="form-actions">

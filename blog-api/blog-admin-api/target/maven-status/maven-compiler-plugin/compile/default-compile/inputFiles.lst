@@ -6,4 +6,5 @@ D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\co
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminTagController.java
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminUserController.java
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AuthController.java
+D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\ImageController.java
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\dto\ArticleRequest.java

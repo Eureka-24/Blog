@@ -80,3 +80,19 @@ export interface User {
   createTime?: string;
   updateTime?: string;
 }
+
+export interface Image {
+  id?: number;
+  articleId?: number;
+  originalName: string;
+  fileName: string;
+  filePath?: string;
+  thumbnailPath?: string;
+  fileSize: number;
+  mimeType?: string;
+  width?: number;
+  height?: number;
+  url?: string;
+  thumbnailUrl?: string;
+  createTime?: string;
+}

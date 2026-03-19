@@ -4,6 +4,7 @@ com\blog\admin\controller\AdminCommentController.class
 com\blog\admin\controller\AdminCategoryController.class
 com\blog\admin\controller\AdminRegistrationCodeController$GenerateCodeRequest.class
 com\blog\admin\controller\AdminUserController.class
+com\blog\admin\controller\ImageController.class
 com\blog\admin\controller\AdminArticleController.class
 com\blog\admin\controller\AdminUserController$CreateUserRequest.class
 com\blog\admin\controller\AuthController.class

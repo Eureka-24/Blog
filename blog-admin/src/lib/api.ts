@@ -1,7 +1,24 @@
-import type { Article, ArticleRequest, Category, Tag, Comment, RegistrationCode, User } from '../types';
+import type { Article, ArticleRequest, Category, Tag, Comment, RegistrationCode, User, Image } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 const WEB_API_URL = import.meta.env.VITE_WEB_API_URL || 'http://localhost:8080';
+
+/**
+ * 获取完整的图片URL
+ * 如果是相对路径（以/开头），则添加API基础URL
+ */
+export function getImageUrl(path: string | null | undefined): string | undefined {
+  if (!path) return undefined;
+  // 如果已经是完整URL（http/https），直接返回
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  // 如果是相对路径，添加API基础URL
+  if (path.startsWith('/')) {
+    return `${API_BASE_URL}${path}`;
+  }
+  return path;
+}
 
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -28,7 +45,14 @@ export async function request<T>(
   };
 
   if (data && method !== 'GET') {
-    config.body = JSON.stringify(data);
+    // 如果是 FormData，不要设置 Content-Type，让浏览器自动设置
+    if (data instanceof FormData) {
+      config.body = data;
+      // 删除 Content-Type 头，让浏览器自动设置 multipart boundary
+      delete (config.headers as Record<string, string>)['Content-Type'];
+    } else {
+      config.body = JSON.stringify(data);
+    }
   }
 
   try {
@@ -166,6 +190,28 @@ export const adminApi = {
     delete: (id: number) => requestWithAuth<void>(`/api/admin/users/${id}`, {
       method: 'DELETE',
     }),
+  },
+
+  // 图片管理
+  images: {
+    upload: (file: File, articleId?: number) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (articleId) {
+        formData.append('articleId', articleId.toString());
+      }
+      return request<Image>('/api/admin/images/upload', {
+        method: 'POST',
+        data: formData,
+        headers: {}, // 让浏览器自动设置 Content-Type with boundary
+      });
+    },
+    getByArticle: (articleId: number) => request<Image[]>(`/api/admin/images?articleId=${articleId}`),
+    delete: (id: number) => request<void>(`/api/admin/images/${id}`, {
+      method: 'DELETE',
+    }),
+    getUrl: (id: number) => request<{ url: string }>(`/api/admin/images/${id}/url`),
+    getThumbnailUrl: (id: number) => request<{ url: string }>(`/api/admin/images/${id}/thumbnail`),
   },
 };
 
