@@ -119,6 +119,8 @@
   position: fixed;
   height: 100vh;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-header {
@@ -164,6 +166,19 @@
 
 .sidebar-nav {
   padding: 16px 0;
+  flex: 1;
+}
+
+.sidebar-footer {
+  padding: 16px 0;
+  border-top: 1px solid #e4e7ed;
+  margin-top: auto;
+}
+
+.nav-link {
+  display: block;
+  text-decoration: none;
+  color: #606266;
 }
 
 .nav-item {

@@ -152,6 +152,16 @@ function App() {
             💬 评论管理
           </button>
         </nav>
+        <div className="sidebar-footer">
+          <a
+            className="nav-item nav-link"
+            href={import.meta.env.VITE_WEB_URL || 'http://localhost:3000'}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            🌐 前往前台
+          </a>
+        </div>
       </aside>
 
       {/* 主内容区 */}
