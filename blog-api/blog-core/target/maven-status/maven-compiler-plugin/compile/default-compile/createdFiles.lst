@@ -10,8 +10,10 @@ com\blog\core\service\UserService.class
 com\blog\core\service\impl\TagServiceImpl.class
 com\blog\core\dto\CommentDTO.class
 com\blog\core\entity\Category.class
+com\blog\core\entity\RegistrationCode.class
 com\blog\core\entity\Tag.class
 com\blog\core\service\impl\CommentServiceImpl.class
+com\blog\core\service\impl\RegistrationCodeServiceImpl.class
 com\blog\core\config\MybatisPlusConfig.class
 com\blog\core\mapper\CommentMapper.class
 com\blog\core\dto\LoginResponse$UserInfo.class
@@ -19,10 +21,12 @@ com\blog\core\service\impl\UserServiceImpl.class
 com\blog\core\service\TagService.class
 com\blog\core\dto\LoginRequest.class
 com\blog\core\mapper\ArticleMapper.class
+com\blog\core\service\RegistrationCodeService.class
 com\blog\core\mapper\CategoryMapper.class
 com\blog\core\mapper\TagMapper.class
 com\blog\core\dto\LoginResponse.class
 com\blog\core\entity\ArticleTag.class
 com\blog\core\mapper\ArticleTagMapper.class
+com\blog\core\mapper\RegistrationCodeMapper.class
 com\blog\core\service\CommentService.class
 com\blog\core\service\ArticleService.class

@@ -6,12 +6,14 @@ D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\A
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\ArticleTag.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\Category.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\Comment.java
+D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\RegistrationCode.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\Tag.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\User.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\mapper\ArticleMapper.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\mapper\ArticleTagMapper.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\mapper\CategoryMapper.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\mapper\CommentMapper.java
+D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\mapper\RegistrationCodeMapper.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\mapper\TagMapper.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\mapper\UserMapper.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\ArticleService.java
@@ -20,7 +22,9 @@ D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\impl\ArticleServiceImpl.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\impl\CategoryServiceImpl.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\impl\CommentServiceImpl.java
+D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\impl\RegistrationCodeServiceImpl.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\impl\TagServiceImpl.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\impl\UserServiceImpl.java
+D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\RegistrationCodeService.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\TagService.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\UserService.java

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { adminApi } from './lib/api'
-import type { Article, ArticleRequest, Category, Tag, Comment } from './types'
+import type { Article, ArticleRequest, Category, Tag, Comment, RegistrationCode, User } from './types'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import LoginPage from './components/LoginPage'
 import './App.css'
 
-type Page = 'dashboard' | 'articles' | 'categories' | 'tags' | 'comments'
+type Page = 'dashboard' | 'articles' | 'categories' | 'tags' | 'comments' | 'registrationCodes' | 'users'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
@@ -14,6 +14,8 @@ function App() {
   const [categories, setCategories] = useState<Category[]>([])
   const [tags, setTags] = useState<Tag[]>([])
   const [comments, setComments] = useState<Comment[]>([])
+  const [registrationCodes, setRegistrationCodes] = useState<RegistrationCode[]>([])
+  const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
@@ -36,16 +38,20 @@ function App() {
     setLoading(true)
     setError(null)
     try {
-      const [articlesRes, categoriesRes, tagsRes, commentsRes] = await Promise.all([
+      const [articlesRes, categoriesRes, tagsRes, commentsRes, codesRes, usersRes] = await Promise.all([
         adminApi.articles.getAll(),
         adminApi.categories.getAll(),
         adminApi.tags.getAll(),
         adminApi.comments.getAll(),
+        adminApi.registrationCodes.getAll(),
+        adminApi.users.getAll(),
       ])
       setArticles(articlesRes || [])
       setCategories(categoriesRes || [])
       setTags(tagsRes || [])
       setComments(commentsRes || [])
+      setRegistrationCodes(codesRes || [])
+      setUsers(usersRes || [])
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : '加载数据失败'
       setError(errorMsg)
@@ -81,6 +87,8 @@ function App() {
     setCategories([])
     setTags([])
     setComments([])
+    setRegistrationCodes([])
+    setUsers([])
     setError(null)
   }
 
@@ -102,6 +110,10 @@ function App() {
         return <TagsPage tags={tags} setTags={setTags} />
       case 'comments':
         return <CommentsPage comments={comments} setComments={setComments} articles={articles} />
+      case 'registrationCodes':
+        return <RegistrationCodesPage codes={registrationCodes} setCodes={setRegistrationCodes} />
+      case 'users':
+        return <UsersPage users={users} setUsers={setUsers} />
       default:
         return null
     }
@@ -151,6 +163,18 @@ function App() {
           >
             💬 评论管理
           </button>
+          <button
+            className={`nav-item ${currentPage === 'registrationCodes' ? 'active' : ''}`}
+            onClick={() => setCurrentPage('registrationCodes')}
+          >
+            🔑 注册码管理
+          </button>
+          <button
+            className={`nav-item ${currentPage === 'users' ? 'active' : ''}`}
+            onClick={() => setCurrentPage('users')}
+          >
+            👥 用户管理
+          </button>
         </nav>
         <div className="sidebar-footer">
           <a
@@ -173,6 +197,8 @@ function App() {
             {currentPage === 'categories' && '分类管理'}
             {currentPage === 'tags' && '标签管理'}
             {currentPage === 'comments' && '评论管理'}
+            {currentPage === 'registrationCodes' && '注册码管理'}
+            {currentPage === 'users' && '用户管理'}
           </h2>
           <button onClick={loadData} disabled={loading}>
             {loading ? '加载中...' : '🔄 刷新'}
@@ -1236,6 +1262,309 @@ function CommentsPage({ comments, setComments, articles }: CommentsPageProps) {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+// 注册码管理页面
+interface RegistrationCodesPageProps {
+  codes: RegistrationCode[]
+  setCodes: (codes: RegistrationCode[]) => void
+}
+
+function RegistrationCodesPage({ codes, setCodes }: RegistrationCodesPageProps) {
+  const [showForm, setShowForm] = useState(false)
+  const [codeType, setCodeType] = useState(0)
+  const [expireHours, setExpireHours] = useState(24)
+  const [loading, setLoading] = useState(false)
+
+  const handleGenerate = async () => {
+    setLoading(true)
+    try {
+      const newCode = await adminApi.registrationCodes.generate({
+        type: codeType,
+        expireHours: expireHours,
+      })
+      setCodes([newCode, ...codes])
+      setShowForm(false)
+      alert(`注册码生成成功: ${newCode.code}`)
+    } catch (err) {
+      alert('生成注册码失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('确定要删除这个注册码吗？')) return
+    try {
+      await adminApi.registrationCodes.delete(id)
+      setCodes(codes.filter(c => c.id !== id))
+    } catch (err) {
+      alert('删除失败')
+    }
+  }
+
+  const getTypeText = (type: number) => type === 1 ? '管理员码' : '普通用户码'
+  const getStatusText = (code: RegistrationCode) => {
+    if (code.isUsed) return '已使用'
+    if (new Date(code.expireTime) < new Date()) return '已过期'
+    return '有效'
+  }
+
+  return (
+    <div className="registration-codes-page">
+      <div className="section-header">
+        <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
+          {showForm ? '取消' : '生成注册码'}
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="form-container">
+          <h3>生成新注册码</h3>
+          <div className="form-group">
+            <label>注册码类型</label>
+            <select value={codeType} onChange={(e) => setCodeType(Number(e.target.value))}>
+              <option value={0}>普通用户码</option>
+              <option value={1}>管理员码</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>有效期（小时）</label>
+            <input
+              type="number"
+              value={expireHours}
+              onChange={(e) => setExpireHours(Number(e.target.value))}
+              min={1}
+              max={720}
+            />
+          </div>
+          <div className="form-actions">
+            <button className="btn-primary" onClick={handleGenerate} disabled={loading}>
+              {loading ? '生成中...' : '确认生成'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="codes-list">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>注册码</th>
+              <th>类型</th>
+              <th>状态</th>
+              <th>过期时间</th>
+              <th>使用者</th>
+              <th>使用时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {codes.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="empty-cell">暂无注册码</td>
+              </tr>
+            ) : (
+              codes.map(code => (
+                <tr key={code.id}>
+                  <td><code className="code-text">{code.code}</code></td>
+                  <td>{getTypeText(code.type)}</td>
+                  <td>
+                    <span className={`status-badge ${getStatusText(code) === '有效' ? 'status-active' : code.isUsed ? 'status-used' : 'status-expired'}`}>
+                      {getStatusText(code)}
+                    </span>
+                  </td>
+                  <td>{new Date(code.expireTime).toLocaleString('zh-CN')}</td>
+                  <td>{code.usedBy || '-'}</td>
+                  <td>{code.usedTime ? new Date(code.usedTime).toLocaleString('zh-CN') : '-'}</td>
+                  <td>
+                    <button className="btn-delete" onClick={() => handleDelete(code.id!)}>
+                      删除
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// 用户管理页面
+interface UsersPageProps {
+  users: User[]
+  setUsers: (users: User[]) => void
+}
+
+function UsersPage({ users, setUsers }: UsersPageProps) {
+  const [showForm, setShowForm] = useState(false)
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+    email: '',
+    nickname: '',
+    role: 0,
+  })
+  const [loading, setLoading] = useState(false)
+
+  const handleCreate = async () => {
+    if (!formData.username || !formData.password) {
+      alert('用户名和密码不能为空')
+      return
+    }
+    setLoading(true)
+    try {
+      const newUser = await adminApi.users.create(formData)
+      setUsers([newUser, ...users])
+      setShowForm(false)
+      setFormData({ username: '', password: '', email: '', nickname: '', role: 0 })
+    } catch (err) {
+      alert('创建用户失败，用户名可能已存在')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleToggleStatus = async (user: User) => {
+    const newStatus = user.status === 1 ? 0 : 1
+    try {
+      const updatedUser = await adminApi.users.updateStatus(user.id!, newStatus)
+      setUsers(users.map(u => u.id === user.id ? updatedUser : u))
+    } catch (err) {
+      alert('更新状态失败')
+    }
+  }
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('确定要删除这个用户吗？')) return
+    try {
+      await adminApi.users.delete(id)
+      setUsers(users.filter(u => u.id !== id))
+    } catch (err) {
+      alert('删除失败')
+    }
+  }
+
+  const getRoleText = (role: number) => role === 1 ? '管理员' : '普通用户'
+
+  return (
+    <div className="users-page">
+      <div className="section-header">
+        <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
+          {showForm ? '取消' : '新增用户'}
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="form-container">
+          <h3>新增用户</h3>
+          <div className="form-group">
+            <label>用户名 *</label>
+            <input
+              type="text"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              placeholder="请输入用户名"
+            />
+          </div>
+          <div className="form-group">
+            <label>密码 *</label>
+            <input
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="请输入密码"
+            />
+          </div>
+          <div className="form-group">
+            <label>邮箱</label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="请输入邮箱"
+            />
+          </div>
+          <div className="form-group">
+            <label>昵称</label>
+            <input
+              type="text"
+              value={formData.nickname}
+              onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+              placeholder="请输入昵称"
+            />
+          </div>
+          <div className="form-group">
+            <label>角色</label>
+            <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: Number(e.target.value) })}>
+              <option value={0}>普通用户</option>
+              <option value={1}>管理员</option>
+            </select>
+          </div>
+          <div className="form-actions">
+            <button className="btn-primary" onClick={handleCreate} disabled={loading}>
+              {loading ? '创建中...' : '确认创建'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="users-list">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>用户名</th>
+              <th>昵称</th>
+              <th>邮箱</th>
+              <th>角色</th>
+              <th>状态</th>
+              <th>创建时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="empty-cell">暂无用户</td>
+              </tr>
+            ) : (
+              users.map(user => (
+                <tr key={user.id}>
+                  <td>{user.id}</td>
+                  <td>{user.username}</td>
+                  <td>{user.nickname || '-'}</td>
+                  <td>{user.email || '-'}</td>
+                  <td>{getRoleText(user.role)}</td>
+                  <td>
+                    <span className={`status-badge ${user.status === 1 ? 'status-active' : 'status-inactive'}`}>
+                      {user.status === 1 ? '启用' : '禁用'}
+                    </span>
+                  </td>
+                  <td>{user.createTime ? new Date(user.createTime).toLocaleString('zh-CN') : '-'}</td>
+                  <td>
+                    <div className="action-buttons">
+                      <button
+                        className={user.status === 1 ? 'btn-warning' : 'btn-success'}
+                        onClick={() => handleToggleStatus(user)}
+                      >
+                        {user.status === 1 ? '禁用' : '启用'}
+                      </button>
+                      <button className="btn-delete" onClick={() => handleDelete(user.id!)}>
+                        删除
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

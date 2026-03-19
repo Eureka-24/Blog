@@ -1,4 +1,4 @@
-import type { Article, ArticleRequest, Category, Tag, Comment } from '../types';
+import type { Article, ArticleRequest, Category, Tag, Comment, RegistrationCode, User } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 const WEB_API_URL = import.meta.env.VITE_WEB_API_URL || 'http://localhost:8080';
@@ -130,6 +130,34 @@ export const adminApi = {
     reply: (parentId: number, data: Partial<Comment>) => request<Comment>(`/api/admin/comments/${parentId}/reply`, {
       method: 'POST',
       data,
+    }),
+  },
+
+  // 注册码管理
+  registrationCodes: {
+    getAll: () => requestWithAuth<RegistrationCode[]>('/api/admin/registration-codes'),
+    generate: (data: { type: number; expireHours: number }) => requestWithAuth<RegistrationCode>('/api/admin/registration-codes', {
+      method: 'POST',
+      data,
+    }),
+    delete: (id: number) => requestWithAuth<void>(`/api/admin/registration-codes/${id}`, {
+      method: 'DELETE',
+    }),
+  },
+
+  // 用户管理
+  users: {
+    getAll: () => requestWithAuth<User[]>('/api/admin/users'),
+    create: (data: Partial<User> & { password: string }) => requestWithAuth<User>('/api/admin/users', {
+      method: 'POST',
+      data,
+    }),
+    updateStatus: (id: number, status: number) => requestWithAuth<User>(`/api/admin/users/${id}/status`, {
+      method: 'PUT',
+      data: { status },
+    }),
+    delete: (id: number) => requestWithAuth<void>(`/api/admin/users/${id}`, {
+      method: 'DELETE',
     }),
   },
 };

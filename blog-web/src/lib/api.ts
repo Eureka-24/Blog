@@ -110,3 +110,21 @@ export const commentApi = {
     data,
   }),
 };
+
+// 注册 API
+export const registerApi = {
+  register: (data: {
+    username: string;
+    password: string;
+    email: string;
+    nickname: string;
+    registrationCode: string;
+  }) => request<{
+    success: boolean;
+    message: string;
+    userId?: number;
+  }>('/api/register', {
+    method: 'POST',
+    data,
+  }),
+};

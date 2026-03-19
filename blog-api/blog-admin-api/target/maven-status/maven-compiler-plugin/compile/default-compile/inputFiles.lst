@@ -2,6 +2,8 @@ D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\Ad
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminArticleController.java
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminCategoryController.java
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminCommentController.java
+D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminRegistrationCodeController.java
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminTagController.java
+D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminUserController.java
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AuthController.java
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\dto\ArticleRequest.java

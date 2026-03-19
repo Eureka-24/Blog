@@ -55,3 +55,28 @@ export interface Comment {
   createTime?: string;
   article?: Article;
 }
+
+export interface RegistrationCode {
+  id?: number;
+  code: string;
+  type: number; // 0:普通用户码 1:管理员码
+  expireTime: string;
+  isUsed: boolean;
+  usedBy?: number;
+  usedTime?: string;
+  createTime?: string;
+  updateTime?: string;
+}
+
+export interface User {
+  id?: number;
+  username: string;
+  password?: string;
+  email?: string;
+  nickname?: string;
+  avatar?: string;
+  role: number; // 0:普通用户 1:管理员
+  status: number; // 0:禁用 1:启用
+  createTime?: string;
+  updateTime?: string;
+}
