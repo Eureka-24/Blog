@@ -44,8 +44,6 @@ export default function Sidebar({ currentPage, onPageChange, currentUser, onLogo
         <a
           className="nav-item nav-link"
           href={import.meta.env.VITE_WEB_URL || 'http://localhost:3000'}
-          target="_blank"
-          rel="noopener noreferrer"
         >
           🌐 前往前台
         </a>

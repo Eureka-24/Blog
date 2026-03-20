@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { registerApi } from '@/lib/api';
+import type { User } from '@/types';
+import { Header, Footer } from '@/components/layout';
+import LoginModal from '@/components/LoginModal';
 import styles from './register.module.css';
 
 export default function RegisterPage() {
@@ -17,6 +20,34 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // 登录状态
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // 检查登录状态
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    if (token && user) {
+      setCurrentUser(JSON.parse(user));
+    }
+  }, []);
+
+  // 登录成功回调
+  const handleLoginSuccess = (user: User, token: string) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    setCurrentUser(user);
+    setShowLoginModal(false);
+  };
+
+  // 退出登录
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setCurrentUser(null);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -86,153 +117,170 @@ export default function RegisterPage() {
     }
   };
 
-  if (success) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.card}>
-          <div className={styles.successIcon}>✓</div>
-          <h1 className={styles.successTitle}>注册成功！</h1>
-          <p className={styles.successMessage}>
-            您的账号已创建成功，现在可以登录了。
-          </p>
-          <Link href="/" className={styles.button}>
-            返回首页
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={styles.container}>
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>用户注册</h1>
-          <p className={styles.subtitle}>使用注册码创建新账号</p>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <Header
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onShowLogin={() => setShowLoginModal(true)}
+      />
 
-        {error && (
-          <div className={styles.error}>
-            {error}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {success ? (
+          <div className={styles.container}>
+            <div className={styles.card}>
+              <div className={styles.successIcon}>✓</div>
+              <h1 className={styles.successTitle}>注册成功！</h1>
+              <p className={styles.successMessage}>
+                您的账号已创建成功，现在可以登录了。
+              </p>
+              <Link href="/" className={styles.button}>
+                返回首页
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.container}>
+            <div className={styles.card}>
+              <div className={styles.header}>
+                <h1 className={styles.title}>用户注册</h1>
+                <p className={styles.subtitle}>使用注册码创建新账号</p>
+              </div>
+
+              {error && (
+                <div className={styles.error}>
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className={styles.form}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="username" className={styles.label}>
+                    用户名 <span className={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className={styles.input}
+                    placeholder="请输入用户名（至少3个字符）"
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="nickname" className={styles.label}>
+                    昵称
+                  </label>
+                  <input
+                    type="text"
+                    id="nickname"
+                    name="nickname"
+                    value={formData.nickname}
+                    onChange={handleChange}
+                    className={styles.input}
+                    placeholder="请输入昵称（可选，默认使用用户名）"
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="email" className={styles.label}>
+                    邮箱 <span className={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={styles.input}
+                    placeholder="请输入邮箱地址"
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="password" className={styles.label}>
+                    密码 <span className={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={styles.input}
+                    placeholder="请输入密码（至少6个字符）"
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="confirmPassword" className={styles.label}>
+                    确认密码 <span className={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className={styles.input}
+                    placeholder="请再次输入密码"
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="registrationCode" className={styles.label}>
+                    注册码 <span className={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="registrationCode"
+                    name="registrationCode"
+                    value={formData.registrationCode}
+                    onChange={handleChange}
+                    className={styles.input}
+                    placeholder="请输入8位注册码"
+                    disabled={loading}
+                    style={{ textTransform: 'uppercase' }}
+                  />
+                  <p className={styles.hint}>
+                    注册码区分大小写，请联系管理员获取
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  className={styles.submitButton}
+                  disabled={loading}
+                >
+                  {loading ? '注册中...' : '立即注册'}
+                </button>
+              </form>
+
+              <div className={styles.footer}>
+                <Link href="/" className={styles.link}>
+                  ← 返回首页
+                </Link>
+              </div>
+            </div>
           </div>
         )}
+      </main>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.formGroup}>
-            <label htmlFor="username" className={styles.label}>
-              用户名 <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              className={styles.input}
-              placeholder="请输入用户名（至少3个字符）"
-              disabled={loading}
-            />
-          </div>
+      <Footer />
 
-          <div className={styles.formGroup}>
-            <label htmlFor="nickname" className={styles.label}>
-              昵称
-            </label>
-            <input
-              type="text"
-              id="nickname"
-              name="nickname"
-              value={formData.nickname}
-              onChange={handleChange}
-              className={styles.input}
-              placeholder="请输入昵称（可选，默认使用用户名）"
-              disabled={loading}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="email" className={styles.label}>
-              邮箱 <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className={styles.input}
-              placeholder="请输入邮箱地址"
-              disabled={loading}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="password" className={styles.label}>
-              密码 <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className={styles.input}
-              placeholder="请输入密码（至少6个字符）"
-              disabled={loading}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="confirmPassword" className={styles.label}>
-              确认密码 <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className={styles.input}
-              placeholder="请再次输入密码"
-              disabled={loading}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="registrationCode" className={styles.label}>
-              注册码 <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              id="registrationCode"
-              name="registrationCode"
-              value={formData.registrationCode}
-              onChange={handleChange}
-              className={styles.input}
-              placeholder="请输入8位注册码"
-              disabled={loading}
-              style={{ textTransform: 'uppercase' }}
-            />
-            <p className={styles.hint}>
-              注册码区分大小写，请联系管理员获取
-            </p>
-          </div>
-
-          <button
-            type="submit"
-            className={styles.submitButton}
-            disabled={loading}
-          >
-            {loading ? '注册中...' : '立即注册'}
-          </button>
-        </form>
-
-        <div className={styles.footer}>
-          <Link href="/" className={styles.link}>
-            ← 返回首页
-          </Link>
-        </div>
-      </div>
+      {/* 登录弹窗 */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   );
 }

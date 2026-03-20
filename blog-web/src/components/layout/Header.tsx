@@ -26,8 +26,8 @@ export default function Header({ currentUser, onLogout, onShowLogin }: HeaderPro
             </a>
             {/* 管理员入口 - 仅管理员可见 */}
             {currentUser && currentUser.role === 1 && (
-              <a 
-                href={process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:5173'} 
+              <a
+                href={process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:5173'}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
                 管理后台

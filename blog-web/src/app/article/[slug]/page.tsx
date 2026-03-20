@@ -5,18 +5,18 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { articleApi } from '@/lib/api';
 import type { Article, User } from '@/types';
-import { Footer } from '@/components/layout';
+import { Header, Footer } from '@/components/layout';
 import { ArticleContent, CommentSection } from '@/components/article';
 import LoginModal from '@/components/LoginModal';
 
 export default function ArticleDetail() {
   const params = useParams();
   const slug = params.slug as string;
-  
+
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // 登录状态
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -100,14 +100,11 @@ export default function ArticleDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 头部导航 */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link href="/" className="text-blue-600 hover:text-blue-700">
-            ← 返回首页
-          </Link>
-        </div>
-      </header>
+      <Header
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onShowLogin={() => setShowLoginModal(true)}
+      />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ArticleContent article={article} />
