@@ -51,12 +51,16 @@
 }
 
 /* 管理后台 - 全屏布局 */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 #root {
   width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 body {

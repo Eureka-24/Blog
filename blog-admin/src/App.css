@@ -3,6 +3,7 @@
   display: flex;
   min-height: 100vh;
   background: #f5f7fa;
+  overflow-x: hidden;
 }
 
 /* 登录页面样式 */
@@ -114,23 +115,31 @@
 /* 侧边栏 */
 .sidebar {
   width: 240px;
+  min-width: 240px;
   background: white;
   border-right: 1px solid #e4e7ed;
   position: fixed;
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .sidebar-header {
   padding: 20px;
   border-bottom: 1px solid #e4e7ed;
+  box-sizing: border-box;
+  width: 100%;
   
   h1 {
     margin: 0;
     font-size: 20px;
     color: #303133;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .user-info {
@@ -140,11 +149,17 @@
     margin-top: 12px;
     padding-top: 12px;
     border-top: 1px solid #e4e7ed;
+    gap: 8px;
   }
   
   .user-name {
     font-size: 14px;
     color: #606266;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
   }
   
   .logout-btn {
@@ -191,6 +206,10 @@
   font-size: 14px;
   color: #606266;
   transition: all 0.3s;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   
   &:hover {
     background: #f5f7fa;
@@ -209,6 +228,9 @@
   margin-left: 240px;
   flex: 1;
   padding: 20px;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .top-bar {
