@@ -1,5 +1,7 @@
 package com.blog.core.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.blog.core.entity.RegistrationCode;
 import com.blog.core.mapper.RegistrationCodeMapper;
@@ -20,6 +22,15 @@ public class RegistrationCodeServiceImpl extends ServiceImpl<RegistrationCodeMap
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int CODE_LENGTH = 8;
     private final SecureRandom random = new SecureRandom();
+    
+    @Override
+    public Page<RegistrationCode> getCodesPage(int page, int size) {
+        Page<RegistrationCode> codePage = new Page<>(page, size);
+        LambdaQueryWrapper<RegistrationCode> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(RegistrationCode::getCreateTime);
+        page(codePage, wrapper);
+        return codePage;
+    }
     
     @Override
     public RegistrationCode generateCode(Integer type, Integer expireHours) {

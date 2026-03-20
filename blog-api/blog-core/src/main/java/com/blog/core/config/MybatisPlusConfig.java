@@ -1,6 +1,8 @@
 package com.blog.core.config;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import org.apache.ibatis.reflection.MetaObject;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +16,17 @@ import java.time.LocalDateTime;
 @Configuration
 @MapperScan("com.blog.core.mapper")
 public class MybatisPlusConfig {
+
+    /**
+     * 配置MyBatis-Plus拦截器（包含分页插件）
+     */
+    @Bean
+    public MybatisPlusInterceptor mybatisPlusInterceptor() {
+        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        // 添加分页插件
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor());
+        return interceptor;
+    }
 
     @Bean
     public MetaObjectHandler metaObjectHandler() {

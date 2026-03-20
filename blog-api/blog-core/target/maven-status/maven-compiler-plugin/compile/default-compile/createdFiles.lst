@@ -18,6 +18,7 @@ com\blog\core\service\impl\CommentServiceImpl.class
 com\blog\core\service\ImageService.class
 com\blog\core\service\impl\RegistrationCodeServiceImpl.class
 com\blog\core\config\MybatisPlusConfig.class
+com\blog\core\dto\PageResponse.class
 com\blog\core\mapper\CommentMapper.class
 com\blog\core\dto\LoginResponse$UserInfo.class
 com\blog\core\service\impl\UserServiceImpl.class

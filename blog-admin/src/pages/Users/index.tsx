@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
-import type { User } from '../../types'
+import type { User, PageResponse } from '../../types'
+import { Pagination } from '../../components/common'
 
-interface UsersPageProps {
-  users: User[]
-  setUsers: (users: User[]) => void
-}
-
-export default function UsersPage({ users, setUsers }: UsersPageProps) {
+export default function UsersPage() {
+  const [users, setUsers] = useState<User[]>([])
+  const [pageData, setPageData] = useState<PageResponse<User> | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(10)
+  const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     username: '',
@@ -16,31 +17,53 @@ export default function UsersPage({ users, setUsers }: UsersPageProps) {
     nickname: '',
     role: 0,
   })
-  const [loading, setLoading] = useState(false)
+  const [formLoading, setFormLoading] = useState(false)
+
+  // 加载用户数据
+  const loadUsers = async () => {
+    setLoading(true)
+    try {
+      const response = await adminApi.users.getAll(currentPage, pageSize)
+      setUsers(response.records)
+      setPageData(response)
+    } catch (err) {
+      console.error('Error loading users:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadUsers()
+  }, [currentPage])
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
 
   const handleCreate = async () => {
     if (!formData.username || !formData.password) {
       alert('用户名和密码不能为空')
       return
     }
-    setLoading(true)
+    setFormLoading(true)
     try {
-      const newUser = await adminApi.users.create(formData)
-      setUsers([newUser, ...users])
+      await adminApi.users.create(formData)
       setShowForm(false)
       setFormData({ username: '', password: '', email: '', nickname: '', role: 0 })
+      loadUsers()
     } catch (err) {
       alert('创建用户失败，用户名可能已存在')
     } finally {
-      setLoading(false)
+      setFormLoading(false)
     }
   }
 
   const handleToggleStatus = async (user: User) => {
     const newStatus = user.status === 1 ? 0 : 1
     try {
-      const updatedUser = await adminApi.users.updateStatus(user.id!, newStatus)
-      setUsers(users.map(u => u.id === user.id ? updatedUser : u))
+      await adminApi.users.updateStatus(user.id!, newStatus)
+      loadUsers()
     } catch (err) {
       alert('更新状态失败')
     }
@@ -50,7 +73,7 @@ export default function UsersPage({ users, setUsers }: UsersPageProps) {
     if (!confirm('确定要删除这个用户吗？')) return
     try {
       await adminApi.users.delete(id)
-      setUsers(users.filter(u => u.id !== id))
+      loadUsers()
     } catch (err) {
       alert('删除失败')
     }
@@ -113,8 +136,8 @@ export default function UsersPage({ users, setUsers }: UsersPageProps) {
             </select>
           </div>
           <div className="form-actions">
-            <button className="btn-primary" onClick={handleCreate} disabled={loading}>
-              {loading ? '创建中...' : '确认创建'}
+            <button className="btn-primary" onClick={handleCreate} disabled={formLoading}>
+              {formLoading ? '创建中...' : '确认创建'}
             </button>
           </div>
         </div>
@@ -171,6 +194,8 @@ export default function UsersPage({ users, setUsers }: UsersPageProps) {
             )}
           </tbody>
         </table>
+
+        {pageData && <Pagination page={pageData} onPageChange={handlePageChange} />}
       </div>
     </div>
   )

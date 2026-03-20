@@ -3,6 +3,7 @@ D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\config\S
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\dto\CommentDTO.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\dto\LoginRequest.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\dto\LoginResponse.java
+D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\dto\PageResponse.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\Article.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\ArticleTag.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\Category.java

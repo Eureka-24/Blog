@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { adminApi } from './lib/api'
-import type { Article, Category, Tag, Comment, RegistrationCode, User } from './types'
+import type { Category, Tag } from './types'
 import LoginPage from './components/LoginPage'
 import { MainLayout, type Page } from './components/layout'
 
@@ -17,12 +17,8 @@ import './App.css'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
-  const [articles, setArticles] = useState<Article[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [tags, setTags] = useState<Tag[]>([])
-  const [comments, setComments] = useState<Comment[]>([])
-  const [registrationCodes, setRegistrationCodes] = useState<RegistrationCode[]>([])
-  const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
@@ -40,25 +36,17 @@ function App() {
     }
   }, [])
 
-  // 加载数据函数
+  // 加载数据函数（只加载分类和标签，其他数据由各页面自己加载）
   const loadData = async () => {
     setLoading(true)
     setError(null)
     try {
-      const [articlesRes, categoriesRes, tagsRes, commentsRes, codesRes, usersRes] = await Promise.all([
-        adminApi.articles.getAll(),
+      const [categoriesRes, tagsRes] = await Promise.all([
         adminApi.categories.getAll(),
         adminApi.tags.getAll(),
-        adminApi.comments.getAll(),
-        adminApi.registrationCodes.getAll(),
-        adminApi.users.getAll(),
       ])
-      setArticles(articlesRes || [])
       setCategories(categoriesRes || [])
       setTags(tagsRes || [])
-      setComments(commentsRes || [])
-      setRegistrationCodes(codesRes || [])
-      setUsers(usersRes || [])
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : '加载数据失败'
       setError(errorMsg)
@@ -90,12 +78,8 @@ function App() {
     setIsAuthenticated(false)
     setCurrentUser(null)
     // 清空数据
-    setArticles([])
     setCategories([])
     setTags([])
-    setComments([])
-    setRegistrationCodes([])
-    setUsers([])
     setError(null)
   }
 
@@ -108,19 +92,19 @@ function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <Dashboard articles={articles} categories={categories} tags={tags} />
+        return <Dashboard categories={categories} tags={tags} />
       case 'articles':
-        return <ArticlesPage articles={articles} setArticles={setArticles} categories={categories} tags={tags} />
+        return <ArticlesPage categories={categories} tags={tags} />
       case 'categories':
         return <CategoriesPage categories={categories} setCategories={setCategories} />
       case 'tags':
         return <TagsPage tags={tags} setTags={setTags} />
       case 'comments':
-        return <CommentsPage comments={comments} setComments={setComments} articles={articles} />
+        return <CommentsPage />
       case 'registrationCodes':
-        return <RegistrationCodesPage codes={registrationCodes} setCodes={setRegistrationCodes} />
+        return <RegistrationCodesPage />
       case 'users':
-        return <UsersPage users={users} setUsers={setUsers} />
+        return <UsersPage />
       default:
         return null
     }

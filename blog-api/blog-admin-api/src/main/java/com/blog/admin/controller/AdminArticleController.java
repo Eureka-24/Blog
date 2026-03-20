@@ -1,6 +1,8 @@
 package com.blog.admin.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.blog.admin.dto.ArticleRequest;
+import com.blog.core.dto.PageResponse;
 import com.blog.core.entity.Article;
 import com.blog.core.service.ArticleService;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +20,13 @@ public class AdminArticleController {
     private final ArticleService articleService;
 
     @GetMapping
-    public ResponseEntity<List<Article>> list() {
-        return ResponseEntity.ok(articleService.list());
+    public ResponseEntity<PageResponse<Article>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long tagId) {
+        Page<Article> articlePage = articleService.getArticlesPage(page, size, categoryId, tagId);
+        return ResponseEntity.ok(PageResponse.from(articlePage));
     }
 
     @GetMapping("/{id}")

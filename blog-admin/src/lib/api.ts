@@ -1,4 +1,4 @@
-import type { Article, ArticleRequest, Category, Tag, Comment, RegistrationCode, User, Image } from '../types';
+import type { Article, ArticleRequest, Category, Tag, Comment, RegistrationCode, User, Image, PageResponse } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 const WEB_API_URL = import.meta.env.VITE_WEB_API_URL || 'http://localhost:8080';
@@ -104,7 +104,12 @@ export const adminApi = {
   
   // 文章管理
   articles: {
-    getAll: () => request<Article[]>('/api/admin/articles'),
+    getAll: (page: number = 1, size: number = 10, categoryId?: number, tagId?: number) => {
+      let url = `/api/admin/articles?page=${page}&size=${size}`;
+      if (categoryId) url += `&categoryId=${categoryId}`;
+      if (tagId) url += `&tagId=${tagId}`;
+      return request<PageResponse<Article>>(url);
+    },
     getById: (id: number) => request<Article>(`/api/admin/articles/${id}`),
     create: (data: ArticleRequest) => request<Article>('/api/admin/articles', {
       method: 'POST',
@@ -153,7 +158,8 @@ export const adminApi = {
   
   // 评论管理
   comments: {
-    getAll: () => request<Comment[]>('/api/admin/comments'),
+    getAll: (page: number = 1, size: number = 10) => 
+      request<PageResponse<Comment>>(`/api/admin/comments?page=${page}&size=${size}`),
     getByArticle: (articleId: number) => request<Comment[]>(`/api/admin/comments/article/${articleId}`),
     delete: (id: number) => request<void>(`/api/admin/comments/${id}`, {
       method: 'DELETE',
@@ -166,7 +172,8 @@ export const adminApi = {
 
   // 注册码管理
   registrationCodes: {
-    getAll: () => requestWithAuth<RegistrationCode[]>('/api/admin/registration-codes'),
+    getAll: (page: number = 1, size: number = 10) => 
+      requestWithAuth<PageResponse<RegistrationCode>>(`/api/admin/registration-codes?page=${page}&size=${size}`),
     generate: (data: { type: number; expireHours: number }) => requestWithAuth<RegistrationCode>('/api/admin/registration-codes', {
       method: 'POST',
       data,
@@ -178,7 +185,8 @@ export const adminApi = {
 
   // 用户管理
   users: {
-    getAll: () => requestWithAuth<User[]>('/api/admin/users'),
+    getAll: (page: number = 1, size: number = 10) => 
+      requestWithAuth<PageResponse<User>>(`/api/admin/users?page=${page}&size=${size}`),
     create: (data: Partial<User> & { password: string }) => requestWithAuth<User>('/api/admin/users', {
       method: 'POST',
       data,

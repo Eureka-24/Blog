@@ -1,32 +1,55 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
-import type { RegistrationCode } from '../../types'
+import type { RegistrationCode, PageResponse } from '../../types'
+import { Pagination } from '../../components/common'
 
-interface RegistrationCodesPageProps {
-  codes: RegistrationCode[]
-  setCodes: (codes: RegistrationCode[]) => void
-}
-
-export default function RegistrationCodesPage({ codes, setCodes }: RegistrationCodesPageProps) {
+export default function RegistrationCodesPage() {
+  const [codes, setCodes] = useState<RegistrationCode[]>([])
+  const [pageData, setPageData] = useState<PageResponse<RegistrationCode> | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(10)
+  const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [codeType, setCodeType] = useState(0)
   const [expireHours, setExpireHours] = useState(24)
-  const [loading, setLoading] = useState(false)
+  const [formLoading, setFormLoading] = useState(false)
+
+  // 加载注册码数据
+  const loadCodes = async () => {
+    setLoading(true)
+    try {
+      const response = await adminApi.registrationCodes.getAll(currentPage, pageSize)
+      setCodes(response.records)
+      setPageData(response)
+    } catch (err) {
+      console.error('Error loading registration codes:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadCodes()
+  }, [currentPage])
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
 
   const handleGenerate = async () => {
-    setLoading(true)
+    setFormLoading(true)
     try {
       const newCode = await adminApi.registrationCodes.generate({
         type: codeType,
         expireHours: expireHours,
       })
-      setCodes([newCode, ...codes])
       setShowForm(false)
+      loadCodes()
       alert(`注册码生成成功: ${newCode.code}`)
     } catch (err) {
       alert('生成注册码失败')
     } finally {
-      setLoading(false)
+      setFormLoading(false)
     }
   }
 
@@ -34,7 +57,7 @@ export default function RegistrationCodesPage({ codes, setCodes }: RegistrationC
     if (!confirm('确定要删除这个注册码吗？')) return
     try {
       await adminApi.registrationCodes.delete(id)
-      setCodes(codes.filter(c => c.id !== id))
+      loadCodes()
     } catch (err) {
       alert('删除失败')
     }
@@ -93,8 +116,8 @@ export default function RegistrationCodesPage({ codes, setCodes }: RegistrationC
             />
           </div>
           <div className="form-actions">
-            <button className="btn-primary" onClick={handleGenerate} disabled={loading}>
-              {loading ? '生成中...' : '确认生成'}
+            <button className="btn-primary" onClick={handleGenerate} disabled={formLoading}>
+              {formLoading ? '生成中...' : '确认生成'}
             </button>
           </div>
         </div>
@@ -141,6 +164,8 @@ export default function RegistrationCodesPage({ codes, setCodes }: RegistrationC
             )}
           </tbody>
         </table>
+
+        {pageData && <Pagination page={pageData} onPageChange={handlePageChange} />}
       </div>
     </div>
   )

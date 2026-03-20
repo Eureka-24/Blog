@@ -1,5 +1,7 @@
 package com.blog.core.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.blog.core.dto.LoginRequest;
 import com.blog.core.dto.LoginResponse;
@@ -24,6 +26,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     
     // 简单的内存Token存储（生产环境应使用Redis）
     private final Map<String, Long> tokenStore = new HashMap<>();
+
+    @Override
+    public Page<User> getUsersPage(int page, int size) {
+        Page<User> userPage = new Page<>(page, size);
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(User::getCreateTime);
+        page(userPage, wrapper);
+        // 清除密码字段
+        userPage.getRecords().forEach(user -> user.setPassword(null));
+        return userPage;
+    }
 
     @Override
     public LoginResponse login(LoginRequest request) {

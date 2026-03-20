@@ -2,6 +2,17 @@
  * 数据类型定义
  */
 
+/**
+ * 分页响应类型
+ */
+export interface PageResponse<T> {
+  records: T[];
+  total: number;
+  size: number;
+  current: number;
+  pages: number;
+}
+
 export interface Article {
   id?: number;
   title: string;

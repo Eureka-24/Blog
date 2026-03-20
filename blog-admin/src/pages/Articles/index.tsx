@@ -1,36 +1,57 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { adminApi } from '../../lib/api'
-import type { Article, Category, Tag } from '../../types'
-import { EmptyState } from '../../components/common'
+import type { Article, Category, Tag, PageResponse } from '../../types'
+import { EmptyState, Pagination } from '../../components/common'
 import ArticleForm from './ArticleForm'
 import ArticlePreview from './ArticlePreview'
 
 interface ArticlesPageProps {
-  articles: Article[]
-  setArticles: (articles: Article[]) => void
   categories: Category[]
   tags: Tag[]
 }
 
-export default function ArticlesPage({ articles, setArticles, categories, tags }: ArticlesPageProps) {
+export default function ArticlesPage({ categories, tags }: ArticlesPageProps) {
+  const [articles, setArticles] = useState<Article[]>([])
+  const [pageData, setPageData] = useState<PageResponse<Article> | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(10)
+  const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
   const [filterCategory, setFilterCategory] = useState<number | null>(null)
   const [filterTag, setFilterTag] = useState<number | null>(null)
   const [previewArticle, setPreviewArticle] = useState<Article | null>(null)
 
-  const filteredArticles = articles.filter(article => {
-    if (filterCategory && article.categoryId !== filterCategory) return false
-    if (filterTag && !article.tags?.some(t => t.id === filterTag)) return false
-    return true
-  })
+  // 加载文章数据
+  const loadArticles = async () => {
+    setLoading(true)
+    try {
+      const response = await adminApi.articles.getAll(currentPage, pageSize, filterCategory || undefined, filterTag || undefined)
+      setArticles(response.records)
+      setPageData(response)
+    } catch (err) {
+      console.error('Error loading articles:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadArticles()
+  }, [currentPage, filterCategory, filterTag])
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const filteredArticles = articles
 
   const handleDelete = async (id: number) => {
     if (!confirm('确定要删除这篇文章吗？')) return
 
     try {
       await adminApi.articles.delete(id)
-      setArticles(articles.filter(a => a.id !== id))
+      loadArticles()
     } catch (err) {
       alert('删除失败')
       console.error('Error deleting article:', err)
@@ -54,7 +75,10 @@ export default function ArticlesPage({ articles, setArticles, categories, tags }
           <div className="filters">
             <select
               value={filterCategory || ''}
-              onChange={(e) => setFilterCategory(e.target.value ? Number(e.target.value) : null)}
+              onChange={(e) => {
+                setFilterCategory(e.target.value ? Number(e.target.value) : null)
+                setCurrentPage(1)
+              }}
             >
               <option value="">全部分类</option>
               {categories.map(cat => (
@@ -64,7 +88,10 @@ export default function ArticlesPage({ articles, setArticles, categories, tags }
             
             <select
               value={filterTag || ''}
-              onChange={(e) => setFilterTag(e.target.value ? Number(e.target.value) : null)}
+              onChange={(e) => {
+                setFilterTag(e.target.value ? Number(e.target.value) : null)
+                setCurrentPage(1)
+              }}
             >
               <option value="">全部标签</option>
               {tags.map(tag => (
@@ -78,6 +105,7 @@ export default function ArticlesPage({ articles, setArticles, categories, tags }
                 onClick={() => {
                   setFilterCategory(null)
                   setFilterTag(null)
+                  setCurrentPage(1)
                 }}
               >
                 清除筛选
@@ -94,7 +122,7 @@ export default function ArticlesPage({ articles, setArticles, categories, tags }
           tags={tags}
           onSuccess={() => {
             setShowForm(false)
-            window.location.reload()
+            loadArticles()
           }}
           onCancel={() => setShowForm(false)}
         />
@@ -178,6 +206,8 @@ export default function ArticlesPage({ articles, setArticles, categories, tags }
           </tbody>
         </table>
       )}
+
+      {pageData && <Pagination page={pageData} onPageChange={handlePageChange} />}
     </div>
   )
 }

@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react'
+import { adminApi } from '../../lib/api'
 import type { Article, Category, Tag } from '../../types'
 import { EmptyState } from '../../components/common'
 
@@ -20,13 +22,28 @@ function StatCard({ icon, value, label }: StatCardProps) {
 }
 
 interface DashboardProps {
-  articles: Article[]
   categories: Category[]
   tags: Tag[]
 }
 
-export default function Dashboard({ articles, categories, tags }: DashboardProps) {
-  const totalViews = articles.reduce((sum, article) => sum + (article.viewCount || 0), 0)
+export default function Dashboard({ categories, tags }: DashboardProps) {
+  const [articles, setArticles] = useState<Article[]>([])
+  const [totalViews, setTotalViews] = useState(0)
+
+  useEffect(() => {
+    // 加载文章统计数据
+    const loadStats = async () => {
+      try {
+        const response = await adminApi.articles.getAll(1, 100)
+        setArticles(response.records)
+        const views = response.records.reduce((sum, article) => sum + (article.viewCount || 0), 0)
+        setTotalViews(views)
+      } catch (err) {
+        console.error('Error loading stats:', err)
+      }
+    }
+    loadStats()
+  }, [])
 
   return (
     <div className="dashboard">

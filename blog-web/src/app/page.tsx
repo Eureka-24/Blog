@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { articleApi, categoryApi, tagApi } from '@/lib/api';
-import type { Article, Category, Tag, User } from '@/types';
+import type { Article, Category, Tag, User, PageResponse } from '@/types';
 import { Header, Footer } from '@/components/layout';
-import { ArticleList, Sidebar } from '@/components/home';
+import { ArticleList, Sidebar, Pagination } from '@/components/home';
 import LoginModal from '@/components/LoginModal';
 
 export default function Home() {
   const [articles, setArticles] = useState<Article[]>([]);
+  const [pageData, setPageData] = useState<PageResponse<Article> | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,16 +48,17 @@ export default function Home() {
   };
 
   // 加载数据
-  const fetchData = async (categoryId?: number, tagId?: number) => {
+  const fetchData = async (page: number = 1, categoryId?: number, tagId?: number) => {
     try {
       setLoading(true);
       const [articlesRes, categoriesRes, tagsRes] = await Promise.all([
-        articleApi.getArticles(1, 10, categoryId, tagId),
+        articleApi.getArticles(page, pageSize, categoryId, tagId),
         categoryApi.getCategories(),
         tagApi.getTags(),
       ]);
 
       setArticles(articlesRes.records || []);
+      setPageData(articlesRes);
       setCategories(categoriesRes || []);
       setTags(tagsRes || []);
     } catch (err) {
@@ -69,25 +73,35 @@ export default function Home() {
     fetchData();
   }, []);
 
+  // 分页切换
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchData(page, filterCategory || undefined, filterTag || undefined);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // 分类筛选
   const handleCategoryClick = (categoryId: number | null) => {
     setFilterCategory(categoryId);
     setFilterTag(null);
-    fetchData(categoryId || undefined, undefined);
+    setCurrentPage(1);
+    fetchData(1, categoryId || undefined, undefined);
   };
 
   // 标签筛选
   const handleTagClick = (tagId: number | null) => {
     setFilterTag(tagId);
     setFilterCategory(null);
-    fetchData(undefined, tagId || undefined);
+    setCurrentPage(1);
+    fetchData(1, undefined, tagId || undefined);
   };
 
   // 清除筛选
   const handleClearFilter = () => {
     setFilterCategory(null);
     setFilterTag(null);
-    fetchData();
+    setCurrentPage(1);
+    fetchData(1);
   };
 
   if (loading) {
@@ -126,6 +140,14 @@ export default function Home() {
           <div className="lg:col-span-2">
             <h1 className="text-3xl font-bold text-gray-900 mb-6">最新文章</h1>
             <ArticleList articles={articles} />
+            {pageData && (
+              <Pagination
+                currentPage={pageData.current}
+                totalPages={pageData.pages}
+                total={pageData.total}
+                onPageChange={handlePageChange}
+              />
+            )}
           </div>
 
           {/* 右侧边栏 */}

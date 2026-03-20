@@ -1,6 +1,7 @@
 package com.blog.web.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.blog.core.dto.PageResponse;
 import com.blog.core.entity.Article;
 import com.blog.core.service.ArticleService;
 import lombok.RequiredArgsConstructor;
@@ -18,27 +19,37 @@ public class ArticleController {
     private final ArticleService articleService;
 
     @GetMapping
-    public ResponseEntity<Page<Article>> list(
+    public ResponseEntity<PageResponse<Article>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long tagId) {
         // 如果有筛选条件，使用筛选方法
         if (tagId != null) {
-            List<Article> articles = articleService.getArticlesByTag(tagId);
+            List<Article> allArticles = articleService.getArticlesByTag(tagId);
+            // 手动分页
+            int start = (page - 1) * size;
+            int end = Math.min(start + size, allArticles.size());
+            List<Article> pagedArticles = start < allArticles.size() ? allArticles.subList(start, end) : List.of();
+            
             Page<Article> result = new Page<>(page, size);
-            result.setRecords(articles);
-            result.setTotal(articles.size());
-            return ResponseEntity.ok(result);
+            result.setRecords(pagedArticles);
+            result.setTotal(allArticles.size());
+            return ResponseEntity.ok(PageResponse.from(result));
         }
         if (categoryId != null) {
-            List<Article> articles = articleService.getArticlesByCategory(categoryId);
+            List<Article> allArticles = articleService.getArticlesByCategory(categoryId);
+            // 手动分页
+            int start = (page - 1) * size;
+            int end = Math.min(start + size, allArticles.size());
+            List<Article> pagedArticles = start < allArticles.size() ? allArticles.subList(start, end) : List.of();
+            
             Page<Article> result = new Page<>(page, size);
-            result.setRecords(articles);
-            result.setTotal(articles.size());
-            return ResponseEntity.ok(result);
+            result.setRecords(pagedArticles);
+            result.setTotal(allArticles.size());
+            return ResponseEntity.ok(PageResponse.from(result));
         }
-        return ResponseEntity.ok(articleService.getPublishedArticles(page, size));
+        return ResponseEntity.ok(PageResponse.from(articleService.getPublishedArticles(page, size)));
     }
 
     @GetMapping("/{slug}")

@@ -1,6 +1,8 @@
 package com.blog.admin.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.blog.core.dto.CommentDTO;
+import com.blog.core.dto.PageResponse;
 import com.blog.core.entity.Comment;
 import com.blog.core.service.CommentService;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +20,11 @@ public class AdminCommentController {
     private final CommentService commentService;
 
     @GetMapping
-    public ResponseEntity<List<Comment>> list() {
-        return ResponseEntity.ok(commentService.list());
+    public ResponseEntity<PageResponse<Comment>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<Comment> commentPage = commentService.getCommentsPage(page, size);
+        return ResponseEntity.ok(PageResponse.from(commentPage));
     }
 
     @GetMapping("/article/{articleId}")

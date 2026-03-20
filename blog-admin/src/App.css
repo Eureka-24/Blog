@@ -1144,3 +1144,59 @@
     background: #ebb563;
   }
 }
+
+/* 分页组件样式 */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  margin-top: 16px;
+  border-top: 1px solid #ebeef5;
+}
+
+.pagination-info {
+  color: #606266;
+  font-size: 14px;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 12px;
+  background: white;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  color: #606266;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s;
+
+  &:hover:not(:disabled) {
+    color: #409eff;
+    border-color: #409eff;
+  }
+
+  &:disabled {
+    color: #c0c4cc;
+    cursor: not-allowed;
+    background: #f5f7fa;
+  }
+
+  &.active {
+    background: #409eff;
+    color: white;
+    border-color: #409eff;
+  }
+}
+
+.pagination-ellipsis {
+  color: #909399;
+  padding: 0 4px;
+}

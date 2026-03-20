@@ -1,5 +1,7 @@
 package com.blog.admin.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.blog.core.dto.PageResponse;
 import com.blog.core.entity.RegistrationCode;
 import com.blog.core.service.RegistrationCodeService;
 import lombok.Data;
@@ -20,9 +22,11 @@ public class AdminRegistrationCodeController {
     private final RegistrationCodeService registrationCodeService;
 
     @GetMapping
-    public ResponseEntity<List<RegistrationCode>> getAllCodes() {
-        List<RegistrationCode> codes = registrationCodeService.getAllCodes();
-        return ResponseEntity.ok(codes);
+    public ResponseEntity<PageResponse<RegistrationCode>> getAllCodes(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<RegistrationCode> codePage = registrationCodeService.getCodesPage(page, size);
+        return ResponseEntity.ok(PageResponse.from(codePage));
     }
 
     @PostMapping

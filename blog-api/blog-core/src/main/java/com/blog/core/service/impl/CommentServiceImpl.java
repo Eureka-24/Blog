@@ -1,5 +1,7 @@
 package com.blog.core.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.blog.core.dto.CommentDTO;
 import com.blog.core.entity.Comment;
@@ -12,6 +14,15 @@ import java.util.stream.Collectors;
 
 @Service
 public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> implements CommentService {
+
+    @Override
+    public Page<Comment> getCommentsPage(int page, int size) {
+        Page<Comment> commentPage = new Page<>(page, size);
+        LambdaQueryWrapper<Comment> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(Comment::getCreateTime);
+        page(commentPage, wrapper);
+        return commentPage;
+    }
 
     @Override
     public List<CommentDTO> getCommentsByArticleId(Long articleId) {

@@ -1,5 +1,7 @@
 package com.blog.admin.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.blog.core.dto.PageResponse;
 import com.blog.core.entity.User;
 import com.blog.core.service.UserService;
 import lombok.Data;
@@ -22,11 +24,11 @@ public class AdminUserController {
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.list();
-        // 清除密码字段
-        users.forEach(user -> user.setPassword(null));
-        return ResponseEntity.ok(users);
+    public ResponseEntity<PageResponse<User>> getAllUsers(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<User> userPage = userService.getUsersPage(page, size);
+        return ResponseEntity.ok(PageResponse.from(userPage));
     }
 
     @PostMapping

@@ -39,6 +39,56 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
+    public Page<Article> getArticlesPage(int page, int size, Long categoryId, Long tagId) {
+        Page<Article> articlePage = new Page<>(page, size);
+        
+        if (tagId != null) {
+            // 通过标签筛选
+            List<Article> articles = baseMapper.selectByTagId(tagId);
+            
+            // 如果有分类筛选，进一步过滤
+            if (categoryId != null) {
+                articles = articles.stream()
+                    .filter(a -> categoryId.equals(a.getCategoryId()))
+                    .collect(Collectors.toList());
+            }
+            
+            // 手动分页
+            int start = (page - 1) * size;
+            int end = Math.min(start + size, articles.size());
+            List<Article> pagedArticles = start < articles.size() ? articles.subList(start, end) : List.of();
+            
+            articlePage.setRecords(pagedArticles);
+            articlePage.setTotal(articles.size());
+            articlePage.setSize(size);
+            articlePage.setCurrent(page);
+            
+            for (Article article : articlePage.getRecords()) {
+                loadArticleRelations(article);
+            }
+            return articlePage;
+        }
+        
+        // 构建查询条件
+        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(Article::getCreateTime);
+        
+        if (categoryId != null) {
+            wrapper.eq(Article::getCategoryId, categoryId);
+        }
+        
+        // 执行分页查询
+        page(articlePage, wrapper);
+        
+        // 为每篇文章加载 category 和 tags
+        for (Article article : articlePage.getRecords()) {
+            loadArticleRelations(article);
+        }
+        
+        return articlePage;
+    }
+
+    @Override
     public Page<Article> getPublishedArticles(int page, int size) {
         Page<Article> articlePage = baseMapper.selectPublishedArticles(new Page<>(page, size));
         // 为每篇文章加载 category 和 tags
