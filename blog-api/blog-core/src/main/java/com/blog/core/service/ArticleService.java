@@ -33,4 +33,9 @@ public interface ArticleService extends IService<Article> {
     Article createArticle(Article article, List<Long> tagIds);
     
     Article updateArticle(Article article, List<Long> tagIds);
+    
+    /**
+     * 删除文章
+     */
+    void deleteArticle(Long id);
 }

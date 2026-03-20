@@ -3,6 +3,7 @@ D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\co
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminCategoryController.java
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminCommentController.java
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminRegistrationCodeController.java
+D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminSearchController.java
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminTagController.java
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AdminUserController.java
 D:\Blog\main\blog-system\blog-api\blog-admin-api\src\main\java\com\blog\admin\controller\AuthController.java

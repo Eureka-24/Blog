@@ -51,7 +51,7 @@ public class AdminArticleController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        articleService.removeById(id);
+        articleService.deleteArticle(id);
         return ResponseEntity.ok().build();
     }
 }

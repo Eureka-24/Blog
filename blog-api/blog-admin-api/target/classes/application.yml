@@ -39,6 +39,12 @@ logging:
   level:
     com.blog: debug
 
+# Meilisearch 搜索引擎配置
+meilisearch:
+  host: ${MEILI_HOST:http://localhost:7700}
+  api-key: ${MEILI_MASTER_KEY:blogSearchKey}
+  index-name: articles
+
 # 文件上传配置
 app:
   upload:

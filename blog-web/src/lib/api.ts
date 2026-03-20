@@ -1,4 +1,4 @@
-import type { Article, Category, Tag, PageResponse, Comment, User } from '@/types';
+import type { Article, Category, Tag, PageResponse, Comment, User, SearchResult } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:8081';
@@ -144,4 +144,12 @@ export const registerApi = {
     method: 'POST',
     data,
   }),
+};
+
+// Search API
+export const searchApi = {
+  // Search articles
+  search: (query: string, page: number = 1, size: number = 10) => {
+    return request<SearchResult>(`/api/search?query=${encodeURIComponent(query)}&page=${page}&size=${size}`);
+  },
 };

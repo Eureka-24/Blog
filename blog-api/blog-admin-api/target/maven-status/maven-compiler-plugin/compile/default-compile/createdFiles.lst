@@ -1,6 +1,7 @@
 com\blog\admin\controller\AdminRegistrationCodeController.class
 com\blog\admin\dto\ArticleRequest.class
 com\blog\admin\controller\AdminCommentController.class
+com\blog\admin\controller\AdminSearchController.class
 com\blog\admin\controller\AdminCategoryController.class
 com\blog\admin\controller\AdminRegistrationCodeController$GenerateCodeRequest.class
 com\blog\admin\controller\AdminUserController.class

@@ -2,5 +2,6 @@ D:\Blog\main\blog-system\blog-api\blog-web-api\src\main\java\com\blog\web\contro
 D:\Blog\main\blog-system\blog-api\blog-web-api\src\main\java\com\blog\web\controller\CategoryController.java
 D:\Blog\main\blog-system\blog-api\blog-web-api\src\main\java\com\blog\web\controller\CommentController.java
 D:\Blog\main\blog-system\blog-api\blog-web-api\src\main\java\com\blog\web\controller\RegisterController.java
+D:\Blog\main\blog-system\blog-api\blog-web-api\src\main\java\com\blog\web\controller\SearchController.java
 D:\Blog\main\blog-system\blog-api\blog-web-api\src\main\java\com\blog\web\controller\TagController.java
 D:\Blog\main\blog-system\blog-api\blog-web-api\src\main\java\com\blog\web\WebApiApplication.java

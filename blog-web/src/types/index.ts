@@ -66,3 +66,30 @@ export interface PageResponse<T> {
   current: number;
   pages: number;
 }
+
+/**
+ * Search result hit
+ */
+export interface SearchHit {
+  id: number;
+  title: string;
+  summary: string;
+  slug: string;
+  coverImage: string | null;
+  categoryName: string | null;
+  viewCount: number;
+  createTime: string;
+  highlightedTitle: string | null;
+  highlightedContent: string | null;
+}
+
+/**
+ * Search result
+ */
+export interface SearchResult {
+  hits: SearchHit[];
+  totalHits: number;
+  processingTimeMs: number;
+  page: number;
+  pageSize: number;
+}

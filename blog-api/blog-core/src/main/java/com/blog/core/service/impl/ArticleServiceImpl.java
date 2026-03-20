@@ -7,12 +7,14 @@ import com.blog.core.entity.Article;
 import com.blog.core.entity.ArticleTag;
 import com.blog.core.entity.Category;
 import com.blog.core.entity.Tag;
+import com.blog.core.event.ArticleEvent;
 import com.blog.core.mapper.ArticleMapper;
 import com.blog.core.mapper.ArticleTagMapper;
 import com.blog.core.service.ArticleService;
 import com.blog.core.service.CategoryService;
 import com.blog.core.service.TagService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -27,6 +29,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private final ArticleTagMapper articleTagMapper;
     private final TagService tagService;
     private final CategoryService categoryService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public List<Article> list() {
@@ -176,6 +179,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             saveArticleTags(article.getId(), tagIds);
         }
         
+        // 加载关联数据并发布事件
+        loadArticleRelations(article);
+        eventPublisher.publishEvent(new ArticleEvent(this, article, ArticleEvent.EventType.CREATED));
+        
         return article;
     }
 
@@ -198,6 +205,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (tagIds != null && !tagIds.isEmpty()) {
             saveArticleTags(article.getId(), tagIds);
         }
+        
+        // 加载关联数据并发布事件
+        loadArticleRelations(article);
+        eventPublisher.publishEvent(new ArticleEvent(this, article, ArticleEvent.EventType.UPDATED));
         
         return article;
     }
@@ -226,5 +237,24 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .replaceAll("[^a-z0-9\\s-]", "")
                 .replaceAll("\\s+", "-")
                 .replaceAll("-+", "-");
+    }
+
+    @Override
+    @Transactional
+    public void deleteArticle(Long id) {
+        // 先获取文章信息
+        Article article = getById(id);
+        if (article == null) {
+            return;
+        }
+        
+        // 加载关联数据
+        loadArticleRelations(article);
+        
+        // 删除文章
+        removeById(id);
+        
+        // 发布删除事件
+        eventPublisher.publishEvent(new ArticleEvent(this, article, ArticleEvent.EventType.DELETED));
     }
 }

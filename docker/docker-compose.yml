@@ -67,6 +67,8 @@ services:
       DB_PASS: ${DB_PASSWORD:-blog123}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      MEILI_HOST: http://meilisearch:7700
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-blogSearchKey}
     ports:
       - "8080:8080"
     volumes:
@@ -95,6 +97,8 @@ services:
       DB_PASS: ${DB_PASSWORD:-blog123}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      MEILI_HOST: http://meilisearch:7700
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-blogSearchKey}
     ports:
       - "8081:8081"
     volumes:

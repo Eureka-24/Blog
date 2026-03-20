@@ -5,4 +5,5 @@ com\blog\web\controller\CategoryController.class
 com\blog\web\controller\RegisterController$RegisterRequest.class
 com\blog\web\controller\RegisterController$RegisterResponse.class
 com\blog\web\controller\RegisterController.class
+com\blog\web\controller\SearchController.class
 com\blog\web\controller\TagController.class
