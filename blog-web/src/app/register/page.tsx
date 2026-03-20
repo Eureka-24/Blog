@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { registerApi } from '@/lib/api';
-import type { User } from '@/types';
+import { useAuth } from '@/hooks';
 import { Header, Footer } from '@/components/layout';
+import { Loading } from '@/components/common';
 import LoginModal from '@/components/LoginModal';
 import styles from './register.module.css';
 
-export default function RegisterPage() {
+function RegisterContent() {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -21,33 +22,14 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // 登录状态
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-
-  // 检查登录状态
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    if (token && user) {
-      setCurrentUser(JSON.parse(user));
-    }
-  }, []);
-
-  // 登录成功回调
-  const handleLoginSuccess = (user: User, token: string) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
-    setCurrentUser(user);
-    setShowLoginModal(false);
-  };
-
-  // 退出登录
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setCurrentUser(null);
-  };
+  // 使用 useAuth Hook 管理登录状态
+  const { 
+    currentUser, 
+    showLoginModal, 
+    setShowLoginModal, 
+    handleLoginSuccess, 
+    handleLogout 
+  } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -282,5 +264,13 @@ export default function RegisterPage() {
         onLoginSuccess={handleLoginSuccess}
       />
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<Loading fullScreen size="md" />}>
+      <RegisterContent />
+    </Suspense>
   );
 }

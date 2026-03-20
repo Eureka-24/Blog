@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import { articleApi } from '@/lib/api';
-import type { Article, User } from '@/types';
+import type { Article } from '@/types';
+import { useAuth } from '@/hooks';
 import { Header, Footer } from '@/components/layout';
 import { ArticleContent, CommentSection } from '@/components/article';
+import { Loading, ErrorState } from '@/components/common';
 import LoginModal from '@/components/LoginModal';
 
-export default function ArticleDetail() {
+function ArticleContentPage() {
   const params = useParams();
   const slug = params.slug as string;
 
@@ -17,33 +18,14 @@ export default function ArticleDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 登录状态
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-
-  // 检查登录状态
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    if (token && user) {
-      setCurrentUser(JSON.parse(user));
-    }
-  }, []);
-
-  // 登录成功回调
-  const handleLoginSuccess = (user: User, token: string) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
-    setCurrentUser(user);
-    setShowLoginModal(false);
-  };
-
-  // 退出登录
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setCurrentUser(null);
-  };
+  // 使用 useAuth Hook 管理登录状态
+  const { 
+    currentUser, 
+    showLoginModal, 
+    setShowLoginModal, 
+    handleLoginSuccess, 
+    handleLogout 
+  } = useAuth();
 
   useEffect(() => {
     async function fetchArticle() {
@@ -74,27 +56,15 @@ export default function ArticleDetail() {
   }, [slug]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">加载中...</p>
-        </div>
-      </div>
-    );
+    return <Loading fullScreen size="lg" message="加载中..." />;
   }
 
   if (error || !article) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">❌ {error || '文章不存在'}</div>
-          <p className="text-gray-600 mb-4">Slug: {slug || '无'}</p>
-          <Link href="/" className="text-blue-600 hover:text-blue-700">
-            返回首页 →
-          </Link>
-        </div>
-      </div>
+      <ErrorState 
+        message={error || '文章不存在'}
+        additionalInfo={`Slug: ${slug || '无'}`}
+      />
     );
   }
 
@@ -140,5 +110,13 @@ export default function ArticleDetail() {
         onLoginSuccess={handleLoginSuccess}
       />
     </div>
+  );
+}
+
+export default function ArticleDetail() {
+  return (
+    <Suspense fallback={<Loading fullScreen size="lg" message="加载中..." />}>
+      <ArticleContentPage />
+    </Suspense>
   );
 }

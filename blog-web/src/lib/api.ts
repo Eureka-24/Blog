@@ -7,8 +7,8 @@ const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost
  * 获取完整的图片URL
  * 如果是相对路径（以/开头），则添加API基础URL
  */
-export function getImageUrl(path: string | null | undefined): string | undefined {
-  if (!path) return undefined;
+export function getImageUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
   // 如果已经是完整URL（http/https），直接返回
   if (path.startsWith('http://') || path.startsWith('https://')) {
     return path;

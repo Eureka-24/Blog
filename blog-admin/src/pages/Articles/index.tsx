@@ -15,7 +15,7 @@ export default function ArticlesPage({ categories, tags }: ArticlesPageProps) {
   const [pageData, setPageData] = useState<PageResponse<Article> | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
-  const [loading, setLoading] = useState(false)
+  const [, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingArticle, setEditingArticle] = useState<Article | null>(null)
   const [filterCategory, setFilterCategory] = useState<number | null>(null)

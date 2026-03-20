@@ -16,7 +16,7 @@ export default function ArticleContent({ article }: ArticleContentProps) {
       {article.coverImage && (
         <div className="relative h-64 sm:h-96 bg-gray-200">
           <img
-            src={getImageUrl(article.coverImage)}
+            src={getImageUrl(article.coverImage) || ''}
             alt={article.title}
             className="w-full h-full object-cover"
           />

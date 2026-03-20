@@ -8,7 +8,7 @@ export default function UsersPage() {
   const [pageData, setPageData] = useState<PageResponse<User> | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
-  const [loading, setLoading] = useState(false)
+  const [, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     username: '',
@@ -82,7 +82,7 @@ export default function UsersPage() {
   const getRoleText = (role: number) => role === 1 ? '管理员' : '普通用户'
 
   return (
-    <div className="users-page">
+    <div className="page">
       <div className="section-header">
         <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? '取消' : '新增用户'}

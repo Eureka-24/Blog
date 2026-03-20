@@ -5,9 +5,11 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { searchApi, getImageUrl } from '@/lib/api'
 import { Header, Footer } from '@/components/layout'
+import { Loading, EmptyState } from '@/components/common';
 import LoginModal from '@/components/LoginModal'
 import ArticleCard, { type ArticleCardData } from '@/components/home/ArticleCard'
-import type { SearchResult, SearchHit, User } from '@/types'
+import type { SearchResult, SearchHit } from '@/types'
+import { useAuth } from '@/hooks';
 
 function SearchContent() {
   const searchParams = useSearchParams()
@@ -18,25 +20,13 @@ function SearchContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
-  // 登录状态
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [showLoginModal, setShowLoginModal] = useState(false)
-
-  // 检查登录状态
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    const user = localStorage.getItem('user')
-    if (token && user) {
-      setCurrentUser(JSON.parse(user))
-    }
-  }, [])
-
-  // 退出登录
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    setCurrentUser(null)
-  }
+  // 使用 useAuth Hook 管理登录状态
+  const { 
+    currentUser, 
+    showLoginModal, 
+    setShowLoginModal, 
+    handleLogout 
+  } = useAuth();
 
   useEffect(() => {
     if (query) {
@@ -126,11 +116,7 @@ function SearchContent() {
         )}
 
         {/* Loading State */}
-        {loading && (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-        )}
+        {loading && <Loading size="md" />}
 
         {/* Search Results */}
         {!loading && searchResult && searchResult.hits.length > 0 && (
@@ -143,48 +129,18 @@ function SearchContent() {
 
         {/* Empty State */}
         {!loading && query && searchResult && searchResult.hits.length === 0 && (
-          <div className="text-center py-12">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <h3 className="mt-2 text-lg font-medium text-gray-900">未找到结果</h3>
-            <p className="mt-1 text-gray-500">
-              没有找到与 &quot;{query}&quot; 相关的文章，请尝试其他关键词
-            </p>
-          </div>
+          <EmptyState 
+            icon="file"
+            message={`未找到与 "${query}" 相关的文章，请尝试其他关键词`}
+          />
         )}
 
         {/* No Query State */}
         {!query && (
-          <div className="text-center py-12">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <h3 className="mt-2 text-lg font-medium text-gray-900">请输入搜索关键词</h3>
-            <p className="mt-1 text-gray-500">
-              使用上方搜索框查找文章
-            </p>
-          </div>
+          <EmptyState 
+            icon="search"
+            message="请输入搜索关键词"
+          />
         )}
 
         {/* Pagination */}
@@ -233,8 +189,9 @@ function SearchContent() {
       <LoginModal
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
-        onLoginSuccess={(user) => {
-          setCurrentUser(user)
+        onLoginSuccess={(user, token) => {
+          localStorage.setItem('token', token)
+          localStorage.setItem('user', JSON.stringify(user))
           setShowLoginModal(false)
         }}
       />
@@ -244,11 +201,7 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    }>
+    <Suspense fallback={<Loading fullScreen size="md" />}>
       <SearchContent />
     </Suspense>
   )

@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { articleApi, categoryApi, tagApi } from '@/lib/api';
-import type { Article, Category, Tag, User, PageResponse } from '@/types';
+import type { Article, Category, Tag, PageResponse } from '@/types';
+import { useAuth } from '@/hooks';
 import { Header, Footer } from '@/components/layout';
 import { ArticleList, Sidebar, Pagination } from '@/components/home';
+import { Loading, ErrorState } from '@/components/common';
 import LoginModal from '@/components/LoginModal';
 
-export default function Home() {
+function HomeContent() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [pageData, setPageData] = useState<PageResponse<Article> | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,33 +21,14 @@ export default function Home() {
   const [filterCategory, setFilterCategory] = useState<number | null>(null);
   const [filterTag, setFilterTag] = useState<number | null>(null);
   
-  // 登录状态
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-
-  // 检查登录状态
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    if (token && user) {
-      setCurrentUser(JSON.parse(user));
-    }
-  }, []);
-
-  // 登录成功回调
-  const handleLoginSuccess = (user: User, token: string) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
-    setCurrentUser(user);
-    setShowLoginModal(false);
-  };
-
-  // 退出登录
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setCurrentUser(null);
-  };
+  // 使用 useAuth Hook 管理登录状态
+  const { 
+    currentUser, 
+    showLoginModal, 
+    setShowLoginModal, 
+    handleLoginSuccess, 
+    handleLogout 
+  } = useAuth();
 
   // 加载数据
   const fetchData = async (page: number = 1, categoryId?: number, tagId?: number) => {
@@ -105,24 +88,16 @@ export default function Home() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">加载中...</p>
-        </div>
-      </div>
-    );
+    return <Loading fullScreen size="lg" message="加载中..." />;
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">❌ {error}</div>
-          <p className="text-gray-600">请确保后端服务已启动</p>
-        </div>
-      </div>
+      <ErrorState 
+        message={error} 
+        showBackLink={false}
+        additionalInfo="请确保后端服务已启动"
+      />
     );
   }
 
@@ -172,5 +147,13 @@ export default function Home() {
         onLoginSuccess={handleLoginSuccess}
       />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<Loading fullScreen size="lg" message="加载中..." />}>
+      <HomeContent />
+    </Suspense>
   );
 }

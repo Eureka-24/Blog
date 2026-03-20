@@ -3,6 +3,7 @@
 import type { Article } from '@/types'
 import ArticleCard, { type ArticleCardData } from './ArticleCard'
 import { getImageUrl } from '@/lib/api'
+import { EmptyState } from '@/components/common'
 
 interface ArticleListProps {
   articles: Article[]
@@ -28,8 +29,8 @@ function convertToCardData(article: Article): ArticleCardData {
 export default function ArticleList({ articles }: ArticleListProps) {
   if (articles.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-8 text-center">
-        <p className="text-gray-500">暂无文章</p>
+      <div className="bg-white rounded-lg shadow p-8">
+        <EmptyState icon="box" message="暂无文章" />
       </div>
     )
   }

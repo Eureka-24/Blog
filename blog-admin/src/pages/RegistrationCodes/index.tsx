@@ -8,7 +8,7 @@ export default function RegistrationCodesPage() {
   const [pageData, setPageData] = useState<PageResponse<RegistrationCode> | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
-  const [loading, setLoading] = useState(false)
+  const [, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [codeType, setCodeType] = useState(0)
   const [expireHours, setExpireHours] = useState(24)
@@ -88,7 +88,7 @@ export default function RegistrationCodesPage() {
   }
 
   return (
-    <div className="registration-codes-page">
+    <div className="page">
       <div className="section-header">
         <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? '取消' : '生成注册码'}
