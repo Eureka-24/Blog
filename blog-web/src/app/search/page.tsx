@@ -3,10 +3,10 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { searchApi } from '@/lib/api'
-import { getImageUrl } from '@/lib/api'
+import { searchApi, getImageUrl } from '@/lib/api'
 import { Header, Footer } from '@/components/layout'
 import LoginModal from '@/components/LoginModal'
+import ArticleCard, { type ArticleCardData } from '@/components/home/ArticleCard'
 import type { SearchResult, SearchHit, User } from '@/types'
 
 function SearchContent() {
@@ -58,12 +58,29 @@ function SearchContent() {
     }
   }
 
-  const renderHighlightedContent = (hit: SearchHit) => {
+  /**
+   * 将 SearchHit 转换为 ArticleCardData
+   */
+  const convertToCardData = (hit: SearchHit): ArticleCardData => {
+    const title = hit.highlightedTitle && hit.highlightedTitle.includes('<em>')
+      ? <span dangerouslySetInnerHTML={{ __html: hit.highlightedTitle }} />
+      : hit.title
+
     const content = hit.highlightedContent || hit.summary || ''
-    if (content.includes('<em>')) {
-      return <span dangerouslySetInnerHTML={{ __html: content }} />
+    const summary = content.includes('<em>')
+      ? <span dangerouslySetInnerHTML={{ __html: content }} />
+      : content
+
+    return {
+      id: hit.id,
+      title,
+      summary,
+      coverImage: hit.coverImage ? getImageUrl(hit.coverImage) : null,
+      categoryName: hit.categoryName,
+      createTime: hit.createTime,
+      viewCount: hit.viewCount,
+      slug: hit.slug || null
     }
-    return <span>{content}</span>
   }
 
   const totalPages = searchResult ? Math.ceil(searchResult.totalHits / searchResult.pageSize) : 0
@@ -119,56 +136,7 @@ function SearchContent() {
         {!loading && searchResult && searchResult.hits.length > 0 && (
           <div className="space-y-6">
             {searchResult.hits.map((hit) => (
-              <article
-                key={hit.id}
-                className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow duration-300"
-              >
-                {hit.coverImage && (
-                  <div className="relative h-48 bg-gray-200">
-                    <img
-                      src={getImageUrl(hit.coverImage)}
-                      alt={hit.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    {hit.categoryName && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {hit.categoryName}
-                      </span>
-                    )}
-                    <span className="text-sm text-gray-500">
-                      {hit.createTime}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      👁 {hit.viewCount}
-                    </span>
-                  </div>
-
-                  <Link href={`/article/${hit.slug}`}>
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2 hover:text-blue-600">
-                      {hit.highlightedTitle && hit.highlightedTitle.includes('<em>') ? (
-                        <span dangerouslySetInnerHTML={{ __html: hit.highlightedTitle }} />
-                      ) : (
-                        hit.title
-                      )}
-                    </h2>
-                  </Link>
-
-                  <p className="text-gray-600 mb-4 line-clamp-3">
-                    {renderHighlightedContent(hit)}
-                  </p>
-
-                  <Link
-                    href={`/article/${hit.slug}`}
-                    className="inline-flex items-center text-blue-600 hover:text-blue-700"
-                  >
-                    阅读全文 →
-                  </Link>
-                </div>
-              </article>
+              <ArticleCard key={hit.id} data={convertToCardData(hit)} />
             ))}
           </div>
         )}
