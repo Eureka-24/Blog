@@ -114,6 +114,21 @@ services:
       - blog-network
     restart: unless-stopped
 
+  # 导航页服务
+  landing:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile.landing
+    container_name: blog-landing
+    environment:
+      - NEXT_PUBLIC_BLOG_URL=${BLOG_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_ADMIN_URL=${ADMIN_URL:-http://localhost:3001}
+    ports:
+      - "3002:3002"
+    networks:
+      - blog-network
+    restart: unless-stopped
+
   # Nginx 网关
   nginx:
     image: nginx:alpine
@@ -128,6 +143,7 @@ services:
     depends_on:
       - web-api
       - admin-api
+      - landing
     networks:
       - blog-network
     restart: unless-stopped

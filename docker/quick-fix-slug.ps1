@@ -36,7 +36,7 @@ Write-Host ""
 
 Write-Host "[Step 2/4] Building Docker images (this may take a minute)..." -ForegroundColor Yellow
 cd $PSScriptRoot
-docker-compose build web-api admin-api
+docker-compose build web-api admin-api landing
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] Docker build failed!" -ForegroundColor Red
@@ -46,7 +46,7 @@ Write-Host "[OK] Images built successfully" -ForegroundColor Green
 Write-Host ""
 
 Write-Host "[Step 3/4] Starting services with new images..." -ForegroundColor Yellow
-docker-compose up -d web-api admin-api
+docker-compose up -d web-api admin-api landing
 Start-Sleep -Seconds 10
 Write-Host "[OK] Services started" -ForegroundColor Green
 Write-Host ""

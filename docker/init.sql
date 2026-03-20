@@ -140,5 +140,5 @@ ON CONFLICT (slug) DO NOTHING;
 
 -- 插入默认管理员账号 (密码：admin123)
 INSERT INTO users (username, password, email, nickname, role) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lqkkO9QS3TzCjH3rS', 'admin@example.com', '管理员', 1)
+('admin', '$2a$10$brJO6oWEG1nSrrtr5E6TNuQRJ1RaXFVuR2sOu0k.eWwKGsKz0MsDe', 'admin@example.com', '管理员', 1)
 ON CONFLICT (username) DO NOTHING;
