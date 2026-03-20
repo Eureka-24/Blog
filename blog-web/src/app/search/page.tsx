@@ -121,43 +121,53 @@ function SearchContent() {
             {searchResult.hits.map((hit) => (
               <article
                 key={hit.id}
-                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow duration-300"
               >
-                <Link href={`/article/${hit.slug}`} className="flex">
-                  {hit.coverImage && (
-                    <div className="w-48 h-32 flex-shrink-0">
-                      <img
-                        src={getImageUrl(hit.coverImage)}
-                        alt={hit.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="flex-1 p-4">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-2 hover:text-blue-600">
+                {hit.coverImage && (
+                  <div className="relative h-48 bg-gray-200">
+                    <img
+                      src={getImageUrl(hit.coverImage)}
+                      alt={hit.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="p-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    {hit.categoryName && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {hit.categoryName}
+                      </span>
+                    )}
+                    <span className="text-sm text-gray-500">
+                      {hit.createTime}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      👁 {hit.viewCount}
+                    </span>
+                  </div>
+
+                  <Link href={`/article/${hit.slug}`}>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2 hover:text-blue-600">
                       {hit.highlightedTitle && hit.highlightedTitle.includes('<em>') ? (
                         <span dangerouslySetInnerHTML={{ __html: hit.highlightedTitle }} />
                       ) : (
                         hit.title
                       )}
                     </h2>
-                    
-                    <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-                      {renderHighlightedContent(hit)}
-                    </p>
-                    
-                    <div className="flex items-center gap-4 text-xs text-gray-400">
-                      {hit.categoryName && (
-                        <span className="bg-gray-100 px-2 py-1 rounded">
-                          {hit.categoryName}
-                        </span>
-                      )}
-                      <span>{hit.viewCount} 次浏览</span>
-                      <span>{hit.createTime}</span>
-                    </div>
-                  </div>
-                </Link>
+                  </Link>
+
+                  <p className="text-gray-600 mb-4 line-clamp-3">
+                    {renderHighlightedContent(hit)}
+                  </p>
+
+                  <Link
+                    href={`/article/${hit.slug}`}
+                    className="inline-flex items-center text-blue-600 hover:text-blue-700"
+                  >
+                    阅读全文 →
+                  </Link>
+                </div>
               </article>
             ))}
           </div>
@@ -211,28 +221,41 @@ function SearchContent() {
 
         {/* Pagination */}
         {!loading && searchResult && totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-8">
-            {page > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200">
+            <div className="text-sm text-gray-600">
+              共 {searchResult.totalHits} 条结果
+            </div>
+            <div className="flex items-center gap-2">
               <Link
                 href={`/search?q=${encodeURIComponent(query)}&page=${page - 1}`}
-                className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className={`px-3 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors ${page <= 1 ? 'pointer-events-none opacity-50' : ''}`}
               >
                 上一页
               </Link>
-            )}
-            
-            <span className="px-4 py-2 text-gray-600">
-              第 {page} 页，共 {totalPages} 页
-            </span>
-            
-            {page < totalPages && (
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <Link
+                    key={pageNum}
+                    href={`/search?q=${encodeURIComponent(query)}&page=${pageNum}`}
+                    className={`w-10 h-10 text-sm font-medium rounded-md transition-colors flex items-center justify-center ${
+                      pageNum === page
+                        ? 'bg-blue-600 text-white'
+                        : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {pageNum}
+                  </Link>
+                ))}
+              </div>
+
               <Link
                 href={`/search?q=${encodeURIComponent(query)}&page=${page + 1}`}
-                className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className={`px-3 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors ${page >= totalPages ? 'pointer-events-none opacity-50' : ''}`}
               >
                 下一页
               </Link>
-            )}
+            </div>
           </div>
         )}
       </main>
