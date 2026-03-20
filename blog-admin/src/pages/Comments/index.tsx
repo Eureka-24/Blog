@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { adminApi } from '../../lib/api'
 import type { Comment, Article, PageResponse } from '../../types'
 import { EmptyState, Pagination } from '../../components/common'
@@ -233,8 +235,10 @@ export default function CommentsPage() {
                                     </div>
                                   </td>
                                   <td>
-                                    <div className="comment-content" title={comment.content}>
-                                      {comment.content}
+                                    <div className="comment-content markdown-content" title={comment.content}>
+                                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {comment.content}
+                                      </ReactMarkdown>
                                     </div>
                                   </td>
                                   <td>

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { commentApi } from '@/lib/api'
 import type { Comment, User } from '@/types'
 
@@ -179,7 +181,11 @@ export default function CommentSection({ articleId, currentUser, onShowLogin }: 
               </div>
               <span className="text-sm text-gray-500">{formatTime(comment.createTime)}</span>
             </div>
-            <p className="text-gray-700">{comment.content}</p>
+            <div className="prose prose-sm max-w-none text-gray-700">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {comment.content}
+              </ReactMarkdown>
+            </div>
             <button
               onClick={() => handleReplyClick(comment.id!, comment.authorName)}
               className="mt-2 text-sm text-blue-600 hover:text-blue-700"
