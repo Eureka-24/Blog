@@ -46,8 +46,9 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader(value = "Authorization", required = false) String token) {
-        // 简单实现：客户端清除token即可
-        // 如果需要服务端失效token，可以在UserService中添加logout方法
+        if (token != null && !token.isEmpty()) {
+            userService.logout(token);
+        }
         return ResponseEntity.ok().build();
     }
 }

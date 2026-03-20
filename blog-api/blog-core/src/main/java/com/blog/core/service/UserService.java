@@ -37,4 +37,9 @@ public interface UserService extends IService<User> {
      * 生成Token
      */
     String generateToken(User user);
+    
+    /**
+     * 用户登出
+     */
+    void logout(String token);
 }

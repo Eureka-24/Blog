@@ -1,6 +1,8 @@
+D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\config\JwtConfig.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\config\MeiliSearchConfig.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\config\MybatisPlusConfig.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\config\ScheduledTaskConfig.java
+D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\config\WebConfig.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\dto\CommentDTO.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\dto\LoginRequest.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\dto\LoginResponse.java
@@ -16,6 +18,7 @@ D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\T
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\entity\User.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\event\ArticleEvent.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\event\ArticleEventListener.java
+D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\interceptor\JwtAuthenticationInterceptor.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\mapper\ArticleMapper.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\mapper\ArticleTagMapper.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\mapper\CategoryMapper.java
@@ -36,6 +39,8 @@ D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\impl\SearchServiceImpl.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\impl\TagServiceImpl.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\impl\UserServiceImpl.java
+D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\JwtTokenProvider.java
+D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\RedisTokenService.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\RegistrationCodeService.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\SearchService.java
 D:\Blog\main\blog-system\blog-api\blog-core\src\main\java\com\blog\core\service\TagService.java

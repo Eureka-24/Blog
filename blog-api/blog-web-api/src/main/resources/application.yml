@@ -44,3 +44,8 @@ meilisearch:
   host: ${MEILI_HOST:http://localhost:7700}
   api-key: ${MEILI_MASTER_KEY:blogSearchKey}
   index-name: articles
+
+# JWT 配置
+jwt:
+  secret: ${JWT_SECRET:defaultSecretKeyForDevelopmentOnlyChangeInProduction}
+  expiration: 2592000000  # 30天，单位毫秒

@@ -7,15 +7,13 @@ import com.blog.core.dto.LoginRequest;
 import com.blog.core.dto.LoginResponse;
 import com.blog.core.entity.User;
 import com.blog.core.mapper.UserMapper;
+import com.blog.core.service.JwtTokenProvider;
+import com.blog.core.service.RedisTokenService;
 import com.blog.core.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -23,9 +21,8 @@ import java.util.UUID;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-    
-    // 简单的内存Token存储（生产环境应使用Redis）
-    private final Map<String, Long> tokenStore = new HashMap<>();
+    private final JwtTokenProvider jwtTokenProvider;
+    private final RedisTokenService redisTokenService;
 
     @Override
     public Page<User> getUsersPage(int page, int size) {
@@ -94,17 +91,49 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public User validateToken(String token) {
-        Long userId = tokenStore.get(token);
-        if (userId == null) {
+        // 1. 先验证JWT有效性
+        if (!jwtTokenProvider.validateToken(token)) {
+            log.warn("JWT Token验证失败");
             return null;
         }
+        
+        // 2. 从JWT解析用户ID
+        Long userId = jwtTokenProvider.getUserIdFromToken(token);
+        if (userId == null) {
+            log.warn("无法从Token解析用户ID");
+            return null;
+        }
+        
+        // 3. 验证Redis中的Token（单设备登录检查）
+        if (!redisTokenService.validateToken(userId, token)) {
+            log.warn("Redis Token验证失败，用户可能已在其他设备登录");
+            return null;
+        }
+        
+        // 4. 自动续期Token
+        redisTokenService.extendTokenTTL(userId, 2592000000L); // 30天
+        
         return findById(userId);
     }
 
     @Override
     public String generateToken(User user) {
-        String token = UUID.randomUUID().toString().replace("-", "");
-        tokenStore.put(token, user.getId());
+        // 生成JWT Token
+        String token = jwtTokenProvider.generateToken(user);
+        // 保存到Redis（单设备登录会自动踢掉旧Token）
+        redisTokenService.saveToken(user.getId(), token, 2592000000L); // 30天
         return token;
+    }
+    
+    @Override
+    public void logout(String token) {
+        if (token == null || token.isEmpty()) {
+            return;
+        }
+        Long userId = jwtTokenProvider.getUserIdFromToken(token);
+        if (userId != null) {
+            redisTokenService.deleteToken(userId);
+            log.info("用户 {} 已登出", userId);
+        }
     }
 }

@@ -108,50 +108,50 @@ export const adminApi = {
       let url = `/api/admin/articles?page=${page}&size=${size}`;
       if (categoryId) url += `&categoryId=${categoryId}`;
       if (tagId) url += `&tagId=${tagId}`;
-      return request<PageResponse<Article>>(url);
+      return requestWithAuth<PageResponse<Article>>(url);
     },
-    getById: (id: number) => request<Article>(`/api/admin/articles/${id}`),
-    create: (data: ArticleRequest) => request<Article>('/api/admin/articles', {
+    getById: (id: number) => requestWithAuth<Article>(`/api/admin/articles/${id}`),
+    create: (data: ArticleRequest) => requestWithAuth<Article>('/api/admin/articles', {
       method: 'POST',
       data,
     }),
-    update: (id: number, data: ArticleRequest) => request<Article>(`/api/admin/articles/${id}`, {
+    update: (id: number, data: ArticleRequest) => requestWithAuth<Article>(`/api/admin/articles/${id}`, {
       method: 'PUT',
       data,
     }),
-    delete: (id: number) => request<void>(`/api/admin/articles/${id}`, {
+    delete: (id: number) => requestWithAuth<void>(`/api/admin/articles/${id}`, {
       method: 'DELETE',
     }),
   },
   
   // 分类管理
   categories: {
-    getAll: () => request<Category[]>('/api/admin/categories'),
-    create: (data: Partial<Category>) => request<Category>('/api/admin/categories', {
+    getAll: () => requestWithAuth<Category[]>('/api/admin/categories'),
+    create: (data: Partial<Category>) => requestWithAuth<Category>('/api/admin/categories', {
       method: 'POST',
       data,
     }),
-    update: (id: number, data: Partial<Category>) => request<Category>(`/api/admin/categories/${id}`, {
+    update: (id: number, data: Partial<Category>) => requestWithAuth<Category>(`/api/admin/categories/${id}`, {
       method: 'PUT',
       data,
     }),
-    delete: (id: number) => request<void>(`/api/admin/categories/${id}`, {
+    delete: (id: number) => requestWithAuth<void>(`/api/admin/categories/${id}`, {
       method: 'DELETE',
     }),
   },
   
   // 标签管理
   tags: {
-    getAll: () => request<Tag[]>('/api/admin/tags'),
-    create: (data: Partial<Tag>) => request<Tag>('/api/admin/tags', {
+    getAll: () => requestWithAuth<Tag[]>('/api/admin/tags'),
+    create: (data: Partial<Tag>) => requestWithAuth<Tag>('/api/admin/tags', {
       method: 'POST',
       data,
     }),
-    update: (id: number, data: Partial<Tag>) => request<Tag>(`/api/admin/tags/${id}`, {
+    update: (id: number, data: Partial<Tag>) => requestWithAuth<Tag>(`/api/admin/tags/${id}`, {
       method: 'PUT',
       data,
     }),
-    delete: (id: number) => request<void>(`/api/admin/tags/${id}`, {
+    delete: (id: number) => requestWithAuth<void>(`/api/admin/tags/${id}`, {
       method: 'DELETE',
     }),
   },
@@ -159,12 +159,12 @@ export const adminApi = {
   // 评论管理
   comments: {
     getAll: (page: number = 1, size: number = 10) => 
-      request<PageResponse<Comment>>(`/api/admin/comments?page=${page}&size=${size}`),
-    getByArticle: (articleId: number) => request<Comment[]>(`/api/admin/comments/article/${articleId}`),
-    delete: (id: number) => request<void>(`/api/admin/comments/${id}`, {
+      requestWithAuth<PageResponse<Comment>>(`/api/admin/comments?page=${page}&size=${size}`),
+    getByArticle: (articleId: number) => requestWithAuth<Comment[]>(`/api/admin/comments/article/${articleId}`),
+    delete: (id: number) => requestWithAuth<void>(`/api/admin/comments/${id}`, {
       method: 'DELETE',
     }),
-    reply: (parentId: number, data: Partial<Comment>) => request<Comment>(`/api/admin/comments/${parentId}/reply`, {
+    reply: (parentId: number, data: Partial<Comment>) => requestWithAuth<Comment>(`/api/admin/comments/${parentId}/reply`, {
       method: 'POST',
       data,
     }),
@@ -208,18 +208,18 @@ export const adminApi = {
       if (articleId) {
         formData.append('articleId', articleId.toString());
       }
-      return request<Image>('/api/admin/images/upload', {
+      return requestWithAuth<Image>('/api/admin/images/upload', {
         method: 'POST',
         data: formData,
         headers: {}, // 让浏览器自动设置 Content-Type with boundary
       });
     },
-    getByArticle: (articleId: number) => request<Image[]>(`/api/admin/images?articleId=${articleId}`),
-    delete: (id: number) => request<void>(`/api/admin/images/${id}`, {
+    getByArticle: (articleId: number) => requestWithAuth<Image[]>(`/api/admin/images?articleId=${articleId}`),
+    delete: (id: number) => requestWithAuth<void>(`/api/admin/images/${id}`, {
       method: 'DELETE',
     }),
-    getUrl: (id: number) => request<{ url: string }>(`/api/admin/images/${id}/url`),
-    getThumbnailUrl: (id: number) => request<{ url: string }>(`/api/admin/images/${id}/thumbnail`),
+    getUrl: (id: number) => requestWithAuth<{ url: string }>(`/api/admin/images/${id}/url`),
+    getThumbnailUrl: (id: number) => requestWithAuth<{ url: string }>(`/api/admin/images/${id}/thumbnail`),
   },
 };
 

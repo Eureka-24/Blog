@@ -56,3 +56,8 @@ app:
 # 文件上传大小限制
 spring.servlet.multipart.max-file-size: 5MB
 spring.servlet.multipart.max-request-size: 20MB
+
+# JWT 配置
+jwt:
+  secret: ${JWT_SECRET:defaultSecretKeyForDevelopmentOnlyChangeInProduction}
+  expiration: 2592000000  # 30天，单位毫秒
