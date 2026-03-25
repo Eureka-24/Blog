@@ -1,0 +1,38 @@
+# 后台管理（Vite + React）静态构建 Dockerfile
+# 规则4：纯静态前端不运行容器，构建产物由 Nginx 直接托管
+# 使用方式:
+#   cd blog-system
+#   docker build -f docker/composes/blog/Dockerfile.admin-static -t blog-admin-static .
+#   docker create --name blog-admin-static-extract blog-admin-static
+#   docker cp blog-admin-static-extract:/app/dist ./blog-admin/dist
+#   docker rm blog-admin-static-extract
+
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# 复制 package.json 和 package-lock.json
+COPY blog-admin/package*.json ./
+
+# 安装依赖
+RUN npm ci
+
+# 复制源代码
+COPY blog-admin/ .
+
+# 设置构建时环境变量
+ARG VITE_API_URL
+ARG VITE_WEB_API_URL
+ARG VITE_WEB_URL
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_WEB_API_URL=${VITE_WEB_API_URL}
+ENV VITE_WEB_URL=${VITE_WEB_URL}
+# Vite base 路径，确保资源引用正确
+ENV BASE_URL=/blog/admin/
+
+# 构建应用
+RUN npm run build
+
+# 最终阶段 - 仅包含构建产物
+FROM scratch AS export
+COPY --from=builder /app/dist /dist

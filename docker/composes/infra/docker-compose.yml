@@ -1,0 +1,76 @@
+version: '3.8'
+
+# 规则2：【基础设施隔离】创建独立的"基础设施网络"
+# 启动命令: docker-compose -f docker-compose.yml up -d
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: infra-postgres
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Shanghai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - infra-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: infra-redis
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - redis_data:/data
+    networks:
+      - infra-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Meilisearch 搜索引擎
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    container_name: infra-meilisearch
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Shanghai
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-masterSearchKey}
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - meilisearch_data:/meili_data
+    networks:
+      - infra-net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  meilisearch_data:
+
+networks:
+  # 规则2：基础设施网络，internal: true 禁止访问外网
+  infra-net:
+    name: infra-net
+    driver: bridge
+    internal: true

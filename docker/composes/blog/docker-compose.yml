@@ -1,0 +1,105 @@
+version: '3.8'
+
+# 规则1：【项目隔离】博客项目业务网络
+# 规则2：【基础设施隔离】后端和SSR前端加入 infra-net 访问数据库
+# 规则3：【统一入口】对外服务加入 proxy-net 被 Nginx 代理
+# 规则4：【静态资源策略】blog-admin (Vite SPA) 不运行容器，由 Nginx 直接托管
+# 启动顺序: infra -> nginx -> landing -> blog
+
+services:
+  # Blog Web API 服务
+  web-api:
+    build:
+      context: ../../..
+      dockerfile: ./docker/composes/blog/Dockerfile.web
+    container_name: blog-web-api
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Shanghai
+      # 规则2：通过 infra-net 连接基础设施
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: blog
+      DB_USER: blog
+      DB_PASS: ${DB_PASSWORD:-blog123}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      MEILI_HOST: ${MEILI_HOST:-http://meilisearch:7700}
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-masterSearchKey}
+      JWT_SECRET: ${JWT_SECRET:-defaultSecretKeyForDevelopmentOnlyChangeInProduction}
+    volumes:
+      - ../../../docker/uploads:/uploads
+    # 规则1 + 规则2 + 规则3：业务网络 + 基础设施网络 + 代理网络
+    networks:
+      - blog-net
+      - infra-net
+      - proxy-net
+    restart: unless-stopped
+
+  # Blog Admin API 服务
+  admin-api:
+    build:
+      context: ../../..
+      dockerfile: ./docker/composes/blog/Dockerfile.admin
+    container_name: blog-admin-api
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Shanghai
+      # 规则2：通过 infra-net 连接基础设施
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: blog
+      DB_USER: blog
+      DB_PASS: ${DB_PASSWORD:-blog123}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      MEILI_HOST: ${MEILI_HOST:-http://meilisearch:7700}
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-masterSearchKey}
+      JWT_SECRET: ${JWT_SECRET:-defaultSecretKeyForDevelopmentOnlyChangeInProduction}
+    volumes:
+      - ../../../docker/uploads:/uploads
+    # 规则1 + 规则2 + 规则3：业务网络 + 基础设施网络 + 代理网络
+    networks:
+      - blog-net
+      - infra-net
+      - proxy-net
+    restart: unless-stopped
+
+  # 博客前台服务 (Next.js SSR)
+  blog-web:
+    build:
+      context: ../../..
+      dockerfile: ./docker/composes/blog/Dockerfile.web-frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost/api}
+        NEXT_PUBLIC_ADMIN_API_URL: ${PUBLIC_ADMIN_API_URL:-http://localhost/api/admin}
+        NEXT_PUBLIC_ADMIN_URL: ${ADMIN_URL:-http://localhost:3001}
+    container_name: blog-web
+    # 规则1 + 规则3：SSR 前端加入业务网络 + 代理网络
+    # 注意：blog-web 是否需要访问数据库取决于是否使用 SSR 数据获取
+    # 如果需要 SSR 时查库，需要加入 infra-net
+    networks:
+      - blog-net
+      - proxy-net
+    restart: unless-stopped
+
+  # 规则4：blog-admin (Vite SPA) 不运行容器！
+  # 静态文件由 Nginx 直接挂载托管
+  # 构建命令: docker build -f Dockerfile.admin-static -t blog-admin-static ..
+  # 构建产物输出到 ./dist/admin，由 nginx/docker-compose.yml 挂载
+
+networks:
+  # 规则1：项目业务网络
+  blog-net:
+    name: blog-net
+    driver: bridge
+  # 规则2：引用外部基础设施网络
+  infra-net:
+    name: infra-net
+    external: true
+  # 规则3：引用外部代理网络
+  proxy-net:
+    name: proxy-net
+    external: true

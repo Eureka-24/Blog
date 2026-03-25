@@ -1,0 +1,67 @@
+# 后台管理（Vite + React）Dockerfile
+
+# 构建阶段
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# 复制 package.json 和 package-lock.json
+COPY blog-admin/package*.json ./
+
+# 安装依赖
+RUN npm ci
+
+# 复制源代码
+COPY blog-admin/ .
+
+# 设置构建时环境变量
+ARG VITE_API_URL
+ARG VITE_WEB_API_URL
+ARG VITE_WEB_URL
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_WEB_API_URL=${VITE_WEB_API_URL}
+ENV VITE_WEB_URL=${VITE_WEB_URL}
+# Vite base 路径，确保资源引用正确（使用/blog/admin以匹配Nginx代理路径）
+ENV BASE_URL=/blog/admin/
+
+# 构建应用
+RUN npm run build
+
+# 生产阶段 - 使用 nginx 提供静态文件服务
+FROM nginx:alpine
+
+# 复制构建产物到 nginx 目录
+# Vite 的 base 参数只影响 HTML 中的引用路径，文件仍在 dist/ 根目录
+COPY --from=builder /app/dist /usr/share/nginx/html/admin
+
+# 复制 nginx 配置（处理 SPA 路由）
+RUN echo 'server { \
+    listen 3001; \
+    server_name _; \
+    root /usr/share/nginx/html; \
+    index index.html; \
+    \
+    # 主入口 - /blog/admin 路径（外部Nginx代理过来的路径） \
+    location /blog/admin { \
+        alias /usr/share/nginx/html/admin; \
+        try_files $uri $uri/ /blog/admin/index.html; \
+    } \
+    \
+    # 静态资源 \
+    location /blog/admin/assets/ { \
+        alias /usr/share/nginx/html/admin/assets/; \
+        expires 1y; \
+        add_header Cache-Control "public, immutable"; \
+    } \
+    \
+    # 根路径重定向到 /blog/admin \
+    location = / { \
+        return 301 /blog/admin; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
+
+# 暴露端口
+EXPOSE 3001
+
+# 启动 nginx
+CMD ["nginx", "-g", "daemon off;"]

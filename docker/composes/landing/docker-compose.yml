@@ -1,0 +1,33 @@
+version: '3.8'
+
+# 规则1：【项目隔离】landing 是 SSR 前端，需要容器
+# 注意：landing 是纯静态导航页，不需要访问数据库，因此不加入 infra-net
+# 启动顺序: infra -> nginx -> landing -> blog
+
+services:
+  # 导航页服务 (Next.js SSR)
+  landing:
+    build:
+      context: ../../..
+      dockerfile: ./docker/composes/landing/Dockerfile.landing
+      args:
+        # 构建时注入环境变量
+        NEXT_PUBLIC_BLOG_URL: ${BLOG_URL:-http://localhost/blog}
+        NEXT_PUBLIC_ADMIN_URL: ${ADMIN_URL:-http://localhost/blog/admin}
+    container_name: blog-landing
+    # 规则1 + 规则3：加入项目业务网络 + 代理网络
+    # landing 不访问数据库，所以不需要 infra-net
+    networks:
+      - landing-net
+      - proxy-net
+    restart: unless-stopped
+
+networks:
+  # 规则1：项目业务网络（landing 专用）
+  landing-net:
+    name: landing-net
+    driver: bridge
+  # 规则3：引用外部代理网络（由 nginx 创建）
+  proxy-net:
+    name: proxy-net
+    external: true
