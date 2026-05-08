@@ -55,6 +55,7 @@ jobs:
           password: ${{ secrets.DEPLOY_PASSWORD }}
           source: "./docs/.vitepress/dist.zip"
           target: "/tmp/dist.zip"
+          tar: false
 
       - name: Deploy
         uses: appleboy/ssh-action@v0.1.7
