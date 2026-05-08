@@ -39,9 +39,9 @@ jobs:
 
       - name: Verify Zip Archive
         run: |
-          if [ ! -f "./docs/.vitepress/dist.zip" ]; then
-            echo "Error: ./docs/.vitepress/dist.zip was not created."
-            ls -la ./docs/.vitepress/
+          if [ ! -f "./dist.zip" ]; then
+            echo "Error: ./dist.zip was not created."
+            ls -la .
             exit 1
           fi
           echo "Zip archive created successfully."
@@ -53,9 +53,9 @@ jobs:
           port: ${{ secrets.DEPLOY_PORT }}
           username: ${{ secrets.DEPLOY_USER }}
           password: ${{ secrets.DEPLOY_PASSWORD }}
-          source: "./docs/.vitepress/dist.zip"
-          target: "/tmp/dist.zip"
-          tar: false
+          source: "./dist.zip"
+          target: "/tmp/"
+          overwrite: true
 
       - name: Deploy
         uses: appleboy/ssh-action@v0.1.7

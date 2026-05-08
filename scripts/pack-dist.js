@@ -2,7 +2,7 @@ import fs from 'fs';
 import AdmZip from 'adm-zip';
 
 const distPath = './docs/.vitepress/dist';
-const outputPath = './docs/.vitepress/dist.zip';
+const outputPath = './dist.zip';
 
 // 检查目录是否存在
 if (!fs.existsSync(distPath)) {
