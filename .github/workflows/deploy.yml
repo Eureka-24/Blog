@@ -56,6 +56,34 @@ jobs:
           source: "./docs/.vitepress/dist.zip"
           target: "/tmp/"
 
+      - name: Check Server /tmp/
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          script: |
+            echo "=== /tmp/ 目录内容 ==="
+            ls -la /tmp/
+
+      - name: Check Deploy Path
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          script: |
+            echo "=== 部署路径: ${{ secrets.DEPLOY_PATH }} ==="
+            if [ -d "${{ secrets.DEPLOY_PATH }}" ]; then
+              ls -la ${{ secrets.DEPLOY_PATH }}
+            else
+              echo "目录不存在!"
+              mkdir -p ${{ secrets.DEPLOY_PATH }}
+              echo "已创建目录"
+            fi
+
       - name: Deploy
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -65,6 +93,11 @@ jobs:
           password: ${{ secrets.DEPLOY_PASSWORD }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
-            unzip -o /tmp/dist.zip
+            echo "=== 解压前 ==="
+            ls -la
+            echo "=== 解压 ==="
+            unzip -o /tmp/dist.zip || echo "unzip failed!"
+            echo "=== 解压后 ==="
+            ls -la
             rm /tmp/dist.zip
-            echo "Deployment completed successfully."
+            echo "Deployment completed."
