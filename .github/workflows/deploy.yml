@@ -52,7 +52,7 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           port: ${{ secrets.DEPLOY_PORT }}
           username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
           source: "./docs/.vitepress/dist.zip"
           target: "/tmp/"
 
@@ -62,7 +62,7 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           port: ${{ secrets.DEPLOY_PORT }}
           username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
             unzip -o /tmp/dist.zip
