@@ -27,7 +27,7 @@ export const teekConfig = defineTeekConfig({
     enabled: true,
     name: "Eurake-24的技术小站",
     bgStyle: "fullImg",  // 背景风格：pure纯色 | partImg局部图 | fullImg全屏图
-    imgSrc: "/blog/bg1.webp",  // 背景图片路径（可多张数组轮播）
+    imgSrc: "/blog/bg1.gif",  // 背景图片路径（可多张数组轮播）
     imgInterval: 15000,  // 多图切换间隔（毫秒）
     imgShuffle: false,   // 是否随机切换
     mask: true,          // 是否显示遮罩
