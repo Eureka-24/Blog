@@ -11,6 +11,8 @@ tags:
 
 # HotRing: A Hotspot-Aware In-Memory Key-Value Store 论文总结
 
+[论文链接](https://www.usenix.org/conference/fast20/presentation/chen-jiqiang)
+
 ## 一、研究背景与问题提出
 
 内存键值存储（Key-Value Store, KVS）如 RocksDB、LevelDB 等被广泛应用于热点缓存场景，但在实际业务中，数据访问的 “热点倾斜” 问题日益突出 —— 少数热点数据占据了绝大多数访问请求，导致传统 KVS 在这类高度倾斜的工作负载下性能显著下降、可靠性降低。
