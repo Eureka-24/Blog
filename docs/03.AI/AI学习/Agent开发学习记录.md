@@ -4,7 +4,7 @@ date: 2025-05-08 20:00:00
 categories:
   - AI
 tags:
-  - AI
+  - AI学习
   - Agent
 ---
 
