@@ -6,7 +6,7 @@ import { useStatsApi } from '../composables/useStatsApi'
 const route = useRoute()
 const { recordVisit, recordDuration, getPageStats } = useStatsApi()
 
-const pv = ref(0)
+const pv = ref<number | null>(null)
 const uv = ref(0)
 const likeCount = ref(0)
 const avgDuration = ref(0)
@@ -28,23 +28,27 @@ function reportDuration() {
 }
 
 onMounted(async () => {
-  // 记录访问
-  const referer = document.referrer ? new URL(document.referrer).hostname : undefined
-  const visitRes = await recordVisit(path, referer)
-  pv.value = visitRes.pv
+  try {
+    // 记录访问
+    const referer = document.referrer ? new URL(document.referrer).hostname : undefined
+    const visitRes = await recordVisit(path, referer)
+    pv.value = visitRes.pv
 
-  // 获取页面统计数据
-  const stats = await getPageStats(path)
-  uv.value = stats.uv
-  likeCount.value = stats.likeCount
-  avgDuration.value = stats.avgDuration
-  loaded.value = true
+    // 获取页面统计数据
+    const stats = await getPageStats(path)
+    uv.value = stats.uv
+    likeCount.value = stats.likeCount
+    avgDuration.value = stats.avgDuration
+    loaded.value = true
 
-  // 页面关闭/隐藏时上报阅读时长
-  window.addEventListener('beforeunload', reportDuration)
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) reportDuration()
-  })
+    // 页面关闭时上报阅读时长
+    window.addEventListener('beforeunload', reportDuration)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) reportDuration()
+    })
+  } catch (e) {
+    console.error('PageMeta error:', e)
+  }
 })
 
 onBeforeUnmount(() => {
@@ -61,7 +65,7 @@ onBeforeUnmount(() => {
     </span>
     <span class="meta-item">❤️ {{ likeCount }}</span>
   </span>
-  <span v-else class="page-meta page-meta-loading">加载中...</span>
+  <span v-else class="page-meta-loading">📖 加载中...</span>
 </template>
 
 <style scoped>
@@ -71,12 +75,12 @@ onBeforeUnmount(() => {
   font-size: 0.875rem;
   color: var(--vp-c-text-2);
 }
-
 .meta-item {
   white-space: nowrap;
 }
-
 .page-meta-loading {
+  font-size: 0.875rem;
+  color: var(--vp-c-text-3);
   opacity: 0.5;
 }
 </style>
