@@ -34,3 +34,5 @@ coverage
 .docs
 
 CLAUDE.md
+
+server/stats.db
