@@ -22,11 +22,13 @@ try {
   // 添加前端静态文件（不保留目录前缀）
   zip.addLocalFolder(distPath, '');
 
-  // [新增] 添加后端文件，排除 venv/ .env __pycache__ .pyc
+  // [新增] 添加后端文件，排除 venv/ .env __pycache__ *.pyc stats.db
   zip.addLocalFolder(serverPath, 'server', (filePath) => {
+    // 排除整个 venv 目录及其所有子文件
+    if (filePath.startsWith('venv') || filePath.includes('/venv/')) return false;
     const basename = filePath.split(/[/\\]/).pop() || '';
-    if (basename === 'venv' || basename === '.env' || basename === '__pycache__') return false;
-    if (basename.endsWith('.pyc')) return false;
+    if (basename === '.env' || basename === '__pycache__') return false;
+    if (basename.endsWith('.pyc') || basename.endsWith('.db')) return false;
     return true;
   });
 
