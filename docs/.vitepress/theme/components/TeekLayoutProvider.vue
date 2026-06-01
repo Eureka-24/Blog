@@ -6,6 +6,8 @@ import ContributeChart from "./ContributeChart.vue";
 import NotFound from "./404.vue";
 import PageMeta from "./PageMeta.vue";
 import LikeButton from "./LikeButton.vue";
+import HotSidebar from "./HotSidebar.vue";
+import TopArticleReplacement from "./TopArticleReplacement.vue";
 
 const route = useRoute();
 
@@ -44,6 +46,20 @@ const isArticlePage = computed(() => {
         <div v-if="isArticlePage" class="stats-article-footer">
           <LikeButton />
         </div>
+      </ClientOnly>
+    </template>
+
+    <!-- 首页精选文章卡片 → 替换为热门文章 -->
+    <template #teek-home-card-top-article>
+      <ClientOnly>
+        <TopArticleReplacement />
+      </ClientOnly>
+    </template>
+
+    <!-- 右侧边栏大纲上方：热门文章 -->
+    <template #aside-outline-before>
+      <ClientOnly>
+        <HotSidebar />
       </ClientOnly>
     </template>
   </Teek.Layout>
