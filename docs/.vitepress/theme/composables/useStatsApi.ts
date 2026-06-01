@@ -11,7 +11,11 @@ const API_BASE = '/api/v1'
 function getOrCreateSessionId(): string {
   let sid = localStorage.getItem(SESSION_KEY)
   if (!sid) {
-    sid = crypto.randomUUID()
+    // 兼容 HTTP 环境（crypto.randomUUID() 需要 HTTPS）
+    sid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
+    })
     localStorage.setItem(SESSION_KEY, sid)
   }
   return sid
