@@ -22,6 +22,7 @@ import "./styles/iframe.scss";
 // ─── 数据统计组件 ───
 import PageMeta from "./components/PageMeta.vue";
 import LikeButton from "./components/LikeButton.vue";
+import DashboardPage from "./components/DashboardPage.vue";
 
 export default {
   extends: Teek,
@@ -29,5 +30,6 @@ export default {
   enhanceApp: ({ app }) => {
     app.component("PageMeta", PageMeta);
     app.component("LikeButton", LikeButton);
+    app.component("DashboardPage", DashboardPage);
   },
 };
