@@ -1,0 +1,37 @@
+{
+  "totalArticles": 46,
+  "totalWords": 133434,
+  "totalCategories": 7,
+  "totalPages": 48,
+  "lastUpdated": "2026-06-01",
+  "categoryStats": {
+    "算法": {
+      "count": 33,
+      "words": 92207
+    },
+    "01.ISAC": {
+      "count": 3,
+      "words": 6395
+    },
+    "02.论文": {
+      "count": 2,
+      "words": 8776
+    },
+    "AI": {
+      "count": 1,
+      "words": 1506
+    },
+    "03.AI": {
+      "count": 5,
+      "words": 20533
+    },
+    "杂项": {
+      "count": 1,
+      "words": 2642
+    },
+    "04.杂项": {
+      "count": 1,
+      "words": 1375
+    }
+  }
+}

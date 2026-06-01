@@ -6,9 +6,12 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ──────────────────────────────────────
+  # Job 1: 构建前端并部署
+  # ──────────────────────────────────────
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
 
@@ -22,29 +25,28 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build
+      - name: Build static site + stats.json
         run: pnpm docs:build
 
       - name: Verify Build Output
         run: |
           if [ ! -d "./docs/.vitepress/dist" ]; then
-            echo "Error: ./docs/.vitepress/dist does not exist after build."
-            ls -la ./docs/.vitepress/
+            echo "Error: ./docs/.vitepress/dist does not exist."
             exit 1
           fi
-          echo "Build output verified."
 
-      - name: Package
+      - name: Package (frontend + backend)
         run: node scripts/pack-dist.js
 
       - name: Verify Zip Archive
         run: |
           if [ ! -f "./dist.zip" ]; then
             echo "Error: ./dist.zip was not created."
-            ls -la .
             exit 1
           fi
-          echo "Zip archive created successfully."
+          # 确认 zip 包含 server 目录
+          unzip -l ./dist.zip | grep "server/" | head -3
+          echo "Zip archive created successfully (includes frontend + server/)."
 
       - name: Upload to Server
         uses: appleboy/scp-action@v0.1.7
@@ -57,7 +59,7 @@ jobs:
           target: "/tmp/"
           overwrite: true
 
-      - name: Deploy
+      - name: Extract Frontend on Server
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -66,6 +68,48 @@ jobs:
           password: ${{ secrets.DEPLOY_PASSWORD }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
-            unzip -o /tmp/dist.zip
+            unzip -o /tmp/dist.zip -x "server/*"
+            echo "Frontend deployed."
+
+  # ──────────────────────────────────────
+  # Job 2: 部署后端（等前端部署完再执行）
+  # ──────────────────────────────────────
+  deploy-backend:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Backend via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          script: |
+            set -e
+
+            echo "=== Step 1: Extract backend files ==="
+            cd ${{ secrets.DEPLOY_PATH }}
+            unzip -o /tmp/dist.zip "server/*" -d .
             rm /tmp/dist.zip
-            echo "Deployment completed."
+
+            echo "=== Step 2: Install/Update Python deps ==="
+            cd ${{ secrets.DEPLOY_PATH }}/server
+            source venv/bin/activate
+            pip install -r requirements.txt --quiet
+
+            echo "=== Step 3: Restart backend service ==="
+            sudo systemctl restart blog-stats
+            sleep 2
+
+            echo "=== Step 4: Verify service status ==="
+            sudo systemctl status blog-stats --no-pager
+
+            echo "=== Step 5: Health check ==="
+            curl -s http://127.0.0.1:8000/health
+            echo ""
+
+            echo "=== Backend deployment completed ==="

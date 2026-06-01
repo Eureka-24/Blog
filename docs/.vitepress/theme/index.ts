@@ -19,7 +19,15 @@ import "vitepress-theme-teek/theme-chalk/tk-fade-up-animation.css"; // 首次加
 import "./styles/code-bg.scss";
 import "./styles/iframe.scss";
 
+// ─── 数据统计组件 ───
+import PageMeta from "./components/PageMeta.vue";
+import LikeButton from "./components/LikeButton.vue";
+
 export default {
   extends: Teek,
   Layout: TeekLayoutProvider,
+  enhanceApp: ({ app }) => {
+    app.component("PageMeta", PageMeta);
+    app.component("LikeButton", LikeButton);
+  },
 };

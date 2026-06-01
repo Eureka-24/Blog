@@ -1,7 +1,9 @@
-<script setup lang="ts" name="TeekLayoutProvider">
+<script setup lang="ts">
 import Teek from "vitepress-theme-teek";
 import ContributeChart from "./ContributeChart.vue";
 import NotFound from "./404.vue";
+import PageMeta from "./PageMeta.vue";
+import LikeButton from "./LikeButton.vue";
 
 </script>
 
@@ -14,6 +16,22 @@ import NotFound from "./404.vue";
     <template #not-found>
       <NotFound />
     </template>
+
+    <!-- 文章页顶部：阅读量信息 -->
+    <template #doc-before>
+      <ClientOnly>
+        <PageMeta />
+      </ClientOnly>
+    </template>
+
+    <!-- 文章页底部：点赞按钮 -->
+    <template #doc-after>
+      <ClientOnly>
+        <div class="stats-article-footer">
+          <LikeButton />
+        </div>
+      </ClientOnly>
+    </template>
   </Teek.Layout>
 </template>
 
@@ -24,5 +42,13 @@ import NotFound from "./404.vue";
   .tk-my__avatar.circle-rotate {
     margin-top: 200px;
   }
+}
+
+.stats-article-footer {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+  border-top: 1px solid var(--vp-c-divider);
+  margin-top: 32px;
 }
 </style>

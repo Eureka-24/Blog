@@ -131,6 +131,14 @@ export default defineConfig({
   },
   vite: {
     plugins: [llmstxt() as any],
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
+      },
+    },
   },
   // transformHtml: (code, id, context) => {
   //   if (context.page !== "404.md") return code;
