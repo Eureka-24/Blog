@@ -90,6 +90,11 @@ async function main() {
     // 过滤目录页
     if (data.title === '目录' || data.permalink === false) continue
 
+    // 过滤非文章页（首页、看板、个人页等）
+    const layout = data.layout || ''
+    if (layout === 'home' || layout === 'page') continue
+    if (data.article === false) continue
+
     stats.articleCount++
 
     // 字数统计
