@@ -75,6 +75,10 @@ def get_hot_articles(
     if since:
         query = query.filter(Visit.created_at >= since)
 
+    # 过滤非文章页面（首页、看板、个人页等）
+    query = query.filter(~Visit.path.in_(["/", "/index", "/dashboard", "/personal"]))
+    query = query.filter(~Visit.path.startswith("/@pages/"))
+
     results = query.group_by(Visit.path).order_by(func.count(Visit.id).desc()).limit(limit).all()
 
     items = []

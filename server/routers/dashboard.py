@@ -101,6 +101,8 @@ def get_pages(
             func.count(Visit.id).label("pv"),
             func.count(func.distinct(Visit.session_id)).label("uv"),
         )
+        .filter(~Visit.path.in_(["/", "/index", "/dashboard", "/personal"]))
+        .filter(~Visit.path.startswith("/@pages/"))
         .group_by(Visit.path)
         .subquery()
     )
@@ -265,6 +267,8 @@ def get_quality_scores(
             func.count(Visit.id).label("pv"),
             func.count(func.distinct(Visit.session_id)).label("sessions"),
         )
+        .filter(~Visit.path.in_(["/", "/index", "/dashboard", "/personal"]))
+        .filter(~Visit.path.startswith("/@pages/"))
         .group_by(Visit.path)
         .subquery()
     )
