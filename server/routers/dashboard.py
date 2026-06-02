@@ -339,18 +339,24 @@ def get_quality_scores(
     page_items = items_raw[offset:offset + size]
 
     # 加载文章标题映射，处理 URL 编码
+    path_title_map = {}
     try:
         import json, os
         from urllib.parse import unquote
-        stats_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "docs", "public", "data", "stats.json")
-        if os.path.exists(stats_path):
-            with open(stats_path, "r", encoding="utf-8") as f:
-                stats_data = json.load(f)
-            path_title_map = stats_data.get("pathTitleMap", {})
-        else:
-            path_title_map = {}
+        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        candidates = [
+            os.path.join(base, "..", "data", "stats.json"),
+            os.path.join(base, "..", "docs", "public", "data", "stats.json"),
+        ]
+        for sp in candidates:
+            sp = os.path.normpath(sp)
+            if os.path.exists(sp):
+                with open(sp, "r", encoding="utf-8") as f:
+                    stats_data = json.load(f)
+                path_title_map = stats_data.get("pathTitleMap", {})
+                break
     except Exception:
-        path_title_map = {}
+        pass
 
     def _lookup_title(raw_path: str) -> str:
         """从数据库路径查找文章标题，处理 .html 后缀和 URL 编码"""

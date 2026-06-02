@@ -103,14 +103,23 @@ def get_hot_articles(
 # ─── 辅助函数：加载 stats.json ───
 
 def _load_stats_json() -> dict:
-    """加载构建时生成的 stats.json（包含 pathTagsMap）"""
-    stats_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        "..", "docs", "public", "data", "stats.json",
-    )
-    if os.path.exists(stats_path):
-        with open(stats_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+    """加载构建时生成的 stats.json（包含 pathTagsMap）
+
+    兼容两种目录结构：
+    - 本地开发:  server/../docs/public/data/stats.json
+    - 服务器部署: server/../data/stats.json（dist 中 data/ 在根目录）
+    """
+    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # server/
+    candidates = [
+        os.path.join(base, "..", "data", "stats.json"),           # 服务器部署
+        os.path.join(base, "..", "docs", "public", "data", "stats.json"),  # 本地开发
+    ]
+    for path in candidates:
+        normalized = os.path.normpath(path)
+        if os.path.exists(normalized):
+            with open(normalized, "r", encoding="utf-8") as f:
+                return json.load(f)
+    print(f"Warning: stats.json not found at any candidate path: {candidates}")
     return {}
 
 
