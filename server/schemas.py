@@ -137,3 +137,16 @@ class GeoItem(BaseModel):
 
 class GeoResponse(BaseModel):
     items: list[GeoItem]
+
+
+class GeoCityItem(BaseModel):
+    country: str
+    region: str | None = None
+    city: str | None = None
+    label: str
+    pv: int
+    percentage: float
+
+
+class GeoCityResponse(BaseModel):
+    items: list[GeoCityItem]

@@ -4,7 +4,7 @@ import { useStatsApi, exportCSV } from "../composables/useStatsApi"
 import LoginDialog from "./LoginDialog.vue"
 import * as echarts from "echarts"
 
-const { isAuthenticated, logout, getOverview, getTrend, getPages, getSources, getDevices, getGeo } = useStatsApi()
+const { isAuthenticated, logout, getOverview, getTrend, getPages, getSources, getDevices, getGeo, getGeoCities } = useStatsApi()
 
 const showLogin = ref(!isAuthenticated.value)
 const activeTab = ref<"overview" | "pages" | "sources" | "devices" | "geo">("overview")
@@ -19,6 +19,8 @@ const pageNo = ref(1)
 const sourceData = ref<any[]>([])
 const deviceData = ref<any>(null)
 const geoData = ref<any[]>([])
+const geoCityData = ref<any[]>([])
+const geoView = ref<"country" | "city">("country")
 const pathTitleMap = ref<Record<string, string>>({})
 
 let chartTrend: any = null
@@ -59,13 +61,14 @@ async function loadData() {
     try { return await fn() } catch (e: any) { errors.push(`${label}: ${e.message}`); console.error(e); return null }
   }
 
-  const [ov, tr, pg, src, dev, geo] = await Promise.all([
+  const [ov, tr, pg, src, dev, geo, geoCity] = await Promise.all([
     safeFetch(() => getOverview(), "总览"),
     safeFetch(() => getTrend(30), "趋势"),
     safeFetch(() => getPages(sortBy.value, pageNo.value, 20), "文章排行"),
     safeFetch(() => getSources(7), "来源"),
     safeFetch(() => getDevices(7), "设备"),
-    safeFetch(() => getGeo(30), "地域"),
+    safeFetch(() => getGeo(30), "地域(国家)"),
+    safeFetch(() => getGeoCities(30), "地域(城市)"),
   ])
   if (ov) overview.value = ov
   if (tr) trendData.value = tr.items
@@ -73,6 +76,7 @@ async function loadData() {
   if (src) sourceData.value = src.items
   if (dev) deviceData.value = dev
   if (geo) geoData.value = geo.items
+  if (geoCity) geoCityData.value = geoCity.items
   if (errors.length) errMsg.value = `部分数据加载失败: ${errors.join("; ")}`
 
   loading.value = false
@@ -242,11 +246,19 @@ function exportDevicesCSV() {
 }
 
 function exportGeoCSV() {
-  exportCSV(geoData.value, [
-    { key: "country", label: "国家/地区" },
-    { key: "pv", label: "PV" },
-    { key: "percentage", label: "占比(%)" },
-  ], "地域分布")
+  if (geoView.value === "country") {
+    exportCSV(geoData.value, [
+      { key: "country", label: "国家/地区" },
+      { key: "pv", label: "PV" },
+      { key: "percentage", label: "占比(%)" },
+    ], "地域分布(国家)")
+  } else {
+    exportCSV(geoCityData.value, [
+      { key: "label", label: "位置" },
+      { key: "pv", label: "PV" },
+      { key: "percentage", label: "占比(%)" },
+    ], "地域分布(城市)")
+  }
 }
 
 onMounted(() => { if (isAuthenticated.value) loadData() })
@@ -463,10 +475,15 @@ watch(deviceView, async () => {
       <!-- 地域 Tab -->
       <div v-if="!loading && !errMsg && activeTab === 'geo'" class="tab-content">
         <div class="tab-toolbar">
-          <span></span>
-          <button v-if="geoData.length" class="export-btn" @click="exportGeoCSV">📥 导出 CSV</button>
+          <div class="device-toggle">
+            <button :class="['toggle-btn', { active: geoView === 'country' }]" @click="geoView = 'country'">🌍 国家</button>
+            <button :class="['toggle-btn', { active: geoView === 'city' }]" @click="geoView = 'city'">🏙️ 城市</button>
+          </div>
+          <button v-if="(geoView === 'country' && geoData.length) || (geoView === 'city' && geoCityData.length)" class="export-btn" @click="exportGeoCSV">📥 导出 CSV</button>
         </div>
-        <table v-if="geoData.length" class="page-table">
+
+        <!-- 国家视图 -->
+        <table v-if="geoView === 'country' && geoData.length" class="page-table">
           <thead>
             <tr><th style="width:44px">#</th><th>国家/地区</th><th style="width:90px;text-align:center">PV</th><th style="width:80px;text-align:center">占比</th></tr>
           </thead>
@@ -487,10 +504,26 @@ watch(deviceView, async () => {
             </tr>
           </tbody>
         </table>
-        <div v-if="!geoData.length" class="empty-hint">
+
+        <!-- 城市视图 -->
+        <table v-if="geoView === 'city' && geoCityData.length" class="page-table">
+          <thead>
+            <tr><th style="width:44px">#</th><th>位置</th><th style="width:90px;text-align:center">PV</th><th style="width:80px;text-align:center">占比</th></tr>
+          </thead>
+          <tbody>
+            <tr v-for="(g, i) in geoCityData" :key="g.label">
+              <td style="text-align:center" class="rank-cell">{{ i + 1 }}</td>
+              <td>{{ g.label }}</td>
+              <td style="text-align:center">{{ g.pv }}</td>
+              <td style="text-align:center">{{ g.percentage }}%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div v-if="!geoData.length && !geoCityData.length" class="empty-hint">
           <span class="empty-icon">🌍</span>
           <p>暂无地域数据</p>
-          <p class="empty-sub">需要 GeoIP 数据库支持，详见 server/download_geoip.py</p>
+          <p class="empty-sub">访问一些文章后，地域分布将在这里显示</p>
         </div>
       </div>
     </div>

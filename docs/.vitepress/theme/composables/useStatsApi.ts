@@ -104,6 +104,19 @@ export interface GeoResponse {
   items: GeoItem[]
 }
 
+export interface GeoCityItem {
+  country: string
+  region: string | null
+  city: string | null
+  label: string
+  pv: number
+  percentage: number
+}
+
+export interface GeoCityResponse {
+  items: GeoCityItem[]
+}
+
 // ─── API 封装 ───
 
 async function request<T>(
@@ -258,11 +271,21 @@ export function useStatsApi() {
     )
   }
 
-  /** 获取地域分布 */
+  /** 获取地域分布（国家） */
   async function getGeo(days = 30) {
     return request<GeoResponse>(
       'GET',
       `/dashboard/geo?days=${days}`,
+      undefined,
+      true,
+    )
+  }
+
+  /** 获取地域分布（城市级） */
+  async function getGeoCities(days = 30) {
+    return request<GeoCityResponse>(
+      'GET',
+      `/dashboard/geo/cities?days=${days}`,
       undefined,
       true,
     )
@@ -285,6 +308,7 @@ export function useStatsApi() {
     getSources,
     getDevices,
     getGeo,
+    getGeoCities,
   }
 }
 

@@ -10,9 +10,8 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Visit
 from schemas import VisitCreate, VisitResponse, DurationCreate
-from utils.hash import hash_ip
 from utils.ua import parse_ua
-from utils.geo import lookup_country
+from utils.geo import lookup
 
 router = APIRouter(prefix="/api/v1", tags=["visits"])
 
@@ -34,20 +33,22 @@ def record_visit(
     os_name, browser = parse_ua(ua_string)
 
     # IP 属地查询（可选）
-    country = None
+    geo_info = None
     if client_ip and client_ip != "127.0.0.1" and client_ip != "::1":
         try:
-            country = lookup_country(client_ip)
+            geo_info = lookup(client_ip)
         except Exception:
             pass
 
     visit = Visit(
         path=data.path,
-        ip_hash=hash_ip(client_ip) if client_ip else None,
+        ip_address=client_ip,
         os=os_name,
         browser=browser,
         referer=data.referer,
-        country=country,
+        country=geo_info["country"] if geo_info else None,
+        region=geo_info["region"] if geo_info else None,
+        city=geo_info["city"] if geo_info else None,
         session_id=data.sessionId,
     )
     db.add(visit)

@@ -15,6 +15,7 @@ from schemas import (
     SourcesResponse, SourceItem,
     DevicesResponse, DeviceOS, DeviceBrowser,
     GeoResponse, GeoItem,
+    GeoCityResponse, GeoCityItem,
 )
 from auth import verify_token
 
@@ -243,3 +244,48 @@ def get_geo(
     ]
 
     return GeoResponse(items=items)
+
+
+@router.get("/geo/cities", response_model=GeoCityResponse)
+def get_geo_cities(
+    days: int = Query(30, description="天数"),
+    db: Session = Depends(get_db),
+):
+    """访客城市级分布"""
+    since = datetime.now() - timedelta(days=days)
+
+    rows = (
+        db.query(
+            Visit.country,
+            Visit.region,
+            Visit.city,
+            func.count(Visit.id).label("pv"),
+        )
+        .filter(Visit.created_at >= since, Visit.city.isnot(None))
+        .group_by(Visit.country, Visit.region, Visit.city)
+        .order_by(func.count(Visit.id).desc())
+        .all()
+    )
+
+    total = sum(r.pv for r in rows) or 1
+    items = []
+    for row in rows:
+        parts = []
+        if row.country:
+            parts.append(row.country)
+        if row.region:
+            parts.append(row.region)
+        if row.city:
+            parts.append(row.city)
+        label = " - ".join(parts) if parts else "未知"
+
+        items.append(GeoCityItem(
+            country=row.country or "",
+            region=row.region,
+            city=row.city,
+            label=label,
+            pv=row.pv,
+            percentage=round(row.pv / total * 100, 1),
+        ))
+
+    return GeoCityResponse(items=items)

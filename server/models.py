@@ -13,11 +13,13 @@ class Visit(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     path = Column(String(500), nullable=False, index=True)
-    ip_hash = Column(String(16), nullable=True)
+    ip_address = Column(String(45), nullable=True)
     os = Column(String(50), nullable=True)
     browser = Column(String(50), nullable=True)
     referer = Column(Text, nullable=True)
     country = Column(String(50), nullable=True)
+    region = Column(String(100), nullable=True)
+    city = Column(String(100), nullable=True)
     session_id = Column(String(36), nullable=False, index=True)
     created_at = Column(DateTime, default=func.now(), index=True)
 
