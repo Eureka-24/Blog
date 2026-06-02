@@ -4,5 +4,4 @@ sqlalchemy==2.0.35
 pydantic==2.9.0
 pyjwt==2.9.0
 user-agents==2.2.0
-geoip2==4.8.0  # IP 属地解析
-# 如需更多国家/城市数据，下载 GeoLite2-City.mmdb 放到 server/ 目录下
+geoip2==4.8.0
