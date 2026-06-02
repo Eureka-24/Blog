@@ -20,6 +20,7 @@ export default defineConfig({
       { rel: "icon", type: "image/svg+xml", href: "/teek-logo-mini.svg" },
     ],
     ["link", { rel: "icon", type: "image/png", href: "/teek-logo-mini.png" }],
+    ["link", { rel: "icon", href: "/favicon.ico" }],
     ["meta", { property: "og:type", content: "website" }],
     ["meta", { property: "og:locale", content: "zh-CN" }],
     ["meta", { property: "og:title", content: "Teek | VitePress Theme" }],
