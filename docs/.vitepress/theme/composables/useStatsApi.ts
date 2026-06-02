@@ -94,6 +94,16 @@ export interface DevicesResponse {
   browsers: DeviceBrowser[]
 }
 
+export interface GeoItem {
+  country: string
+  pv: number
+  percentage: number
+}
+
+export interface GeoResponse {
+  items: GeoItem[]
+}
+
 // ─── API 封装 ───
 
 async function request<T>(
@@ -248,6 +258,16 @@ export function useStatsApi() {
     )
   }
 
+  /** 获取地域分布 */
+  async function getGeo(days = 30) {
+    return request<GeoResponse>(
+      'GET',
+      `/dashboard/geo?days=${days}`,
+      undefined,
+      true,
+    )
+  }
+
   return {
     sessionId,
     token,
@@ -264,5 +284,38 @@ export function useStatsApi() {
     getPages,
     getSources,
     getDevices,
+    getGeo,
   }
+}
+
+// ─── CSV 导出工具 ───
+
+/**
+ * 将表格数据导出为 CSV 文件并触发下载
+ * @param data 数据行数组
+ * @param columns 列定义: [{ key, label }]
+ * @param filename 文件名（不含 .csv）
+ */
+export function exportCSV<T extends Record<string, any>>(
+  data: T[],
+  columns: { key: string; label: string }[],
+  filename: string,
+) {
+  // BOM for UTF-8 + Excel 中文兼容
+  const BOM = '﻿'
+  const header = columns.map((c) => `"${c.label}"`).join(',')
+  const rows = data.map((row) =>
+    columns.map((c) => `"${(row[c.key] ?? '').toString().replace(/"/g, '""')}"`).join(','),
+  )
+  const csv = BOM + header + '\n' + rows.join('\n')
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${filename}.csv`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick, computed, watch } from "vue"
-import { useStatsApi } from "../composables/useStatsApi"
+import { useStatsApi, exportCSV } from "../composables/useStatsApi"
 import LoginDialog from "./LoginDialog.vue"
 import * as echarts from "echarts"
 
-const { isAuthenticated, logout, getOverview, getTrend, getPages, getSources, getDevices } = useStatsApi()
+const { isAuthenticated, logout, getOverview, getTrend, getPages, getSources, getDevices, getGeo } = useStatsApi()
 
 const showLogin = ref(!isAuthenticated.value)
-const activeTab = ref<"overview" | "pages" | "sources" | "devices">("overview")
+const activeTab = ref<"overview" | "pages" | "sources" | "devices" | "geo">("overview")
 const loading = ref(false)
 const errMsg = ref("")
 const overview = ref<any>(null)
@@ -18,6 +18,7 @@ const sortBy = ref("pv")
 const pageNo = ref(1)
 const sourceData = ref<any[]>([])
 const deviceData = ref<any>(null)
+const geoData = ref<any[]>([])
 const pathTitleMap = ref<Record<string, string>>({})
 
 let chartTrend: any = null
@@ -29,6 +30,7 @@ const tabs = [
   { key: "pages" as const, label: "排行", icon: "📄" },
   { key: "sources" as const, label: "来源", icon: "🔗" },
   { key: "devices" as const, label: "设备", icon: "💻" },
+  { key: "geo" as const, label: "地域", icon: "🌍" },
 ]
 
 const deviceView = ref<"os" | "browser">("os")
@@ -57,18 +59,20 @@ async function loadData() {
     try { return await fn() } catch (e: any) { errors.push(`${label}: ${e.message}`); console.error(e); return null }
   }
 
-  const [ov, tr, pg, src, dev] = await Promise.all([
+  const [ov, tr, pg, src, dev, geo] = await Promise.all([
     safeFetch(() => getOverview(), "总览"),
     safeFetch(() => getTrend(30), "趋势"),
     safeFetch(() => getPages(sortBy.value, pageNo.value, 20), "文章排行"),
     safeFetch(() => getSources(7), "来源"),
     safeFetch(() => getDevices(7), "设备"),
+    safeFetch(() => getGeo(30), "地域"),
   ])
   if (ov) overview.value = ov
   if (tr) trendData.value = tr.items
   if (pg) { pageData.value = pg.items; pageTotal.value = pg.total }
   if (src) sourceData.value = src.items
   if (dev) deviceData.value = dev
+  if (geo) geoData.value = geo.items
   if (errors.length) errMsg.value = `部分数据加载失败: ${errors.join("; ")}`
 
   loading.value = false
@@ -198,6 +202,53 @@ async function changePage(n: number) {
 
 function handleLogout() { logout(); showLogin.value = true }
 
+// ─── CSV 导出 ───
+function exportPagesCSV() {
+  const data = pageData.value.map((p: any) => ({
+    title: getArticleTitle(p.path),
+    path: p.path,
+    pv: p.pv,
+    uv: p.uv,
+    likeCount: p.likeCount,
+    avgDuration: Math.round(p.avgDuration) + "s",
+  }))
+  exportCSV(data, [
+    { key: "title", label: "文章标题" },
+    { key: "path", label: "路径" },
+    { key: "pv", label: "PV" },
+    { key: "uv", label: "UV" },
+    { key: "likeCount", label: "点赞" },
+    { key: "avgDuration", label: "平均阅读" },
+  ], "文章排行")
+}
+
+function exportSourcesCSV() {
+  exportCSV(sourceData.value, [
+    { key: "source", label: "来源" },
+    { key: "pv", label: "PV" },
+    { key: "percentage", label: "占比(%)" },
+  ], "来源分布")
+}
+
+function exportDevicesCSV() {
+  const os = (deviceData.value?.os || []).map((d: any) => ({ type: "操作系统", name: d.name, pv: d.pv, percentage: d.percentage }))
+  const br = (deviceData.value?.browsers || []).map((d: any) => ({ type: "浏览器", name: d.name, pv: d.pv, percentage: d.percentage }))
+  exportCSV([...os, ...br], [
+    { key: "type", label: "类别" },
+    { key: "name", label: "名称" },
+    { key: "pv", label: "PV" },
+    { key: "percentage", label: "占比(%)" },
+  ], "设备分布")
+}
+
+function exportGeoCSV() {
+  exportCSV(geoData.value, [
+    { key: "country", label: "国家/地区" },
+    { key: "pv", label: "PV" },
+    { key: "percentage", label: "占比(%)" },
+  ], "地域分布")
+}
+
 onMounted(() => { if (isAuthenticated.value) loadData() })
 
 // 切换 Tab 时重新渲染图表
@@ -291,12 +342,15 @@ watch(deviceView, async () => {
 
       <!-- 文章排行 Tab -->
       <div v-if="!loading && !errMsg && activeTab === 'pages'" class="tab-content">
-        <div v-if="pageData.length">
+        <div class="tab-toolbar">
           <div class="sort-bar">
             <span class="sort-label">排序：</span>
             <button :class="{ active: sortBy === 'pv' }" @click="changeSort('pv')">浏览量</button>
             <button :class="{ active: sortBy === 'uv' }" @click="changeSort('uv')">访客数</button>
           </div>
+          <button v-if="pageData.length" class="export-btn" @click="exportPagesCSV">📥 导出 CSV</button>
+        </div>
+        <div v-if="pageData.length">
           <table class="page-table">
             <thead>
               <tr>
@@ -336,6 +390,10 @@ watch(deviceView, async () => {
 
       <!-- 来源 Tab -->
       <div v-if="!loading && !errMsg && activeTab === 'sources'" class="tab-content">
+        <div class="tab-toolbar">
+          <span></span>
+          <button v-if="sourceData.length" class="export-btn" @click="exportSourcesCSV">📥 导出 CSV</button>
+        </div>
         <div v-if="hasSourceData" id="chart-sources" class="chart-box chart-box--pie"></div>
         <div v-else class="empty-hint">
           <span class="empty-icon">🔗</span>
@@ -357,10 +415,12 @@ watch(deviceView, async () => {
 
       <!-- 设备 Tab -->
       <div v-if="!loading && !errMsg && activeTab === 'devices'" class="tab-content">
-        <!-- 切换按钮 -->
-        <div class="device-toggle">
-          <button :class="['toggle-btn', { active: deviceView === 'os' }]" @click="deviceView = 'os'">🖥️ 操作系统</button>
-          <button :class="['toggle-btn', { active: deviceView === 'browser' }]" @click="deviceView = 'browser'">🌐 浏览器</button>
+        <div class="tab-toolbar">
+          <div class="device-toggle">
+            <button :class="['toggle-btn', { active: deviceView === 'os' }]" @click="deviceView = 'os'">🖥️ 操作系统</button>
+            <button :class="['toggle-btn', { active: deviceView === 'browser' }]" @click="deviceView = 'browser'">🌐 浏览器</button>
+          </div>
+          <button v-if="deviceData?.os?.length || deviceData?.browsers?.length" class="export-btn" @click="exportDevicesCSV">📥 导出 CSV</button>
         </div>
 
         <div v-if="hasDeviceData" id="chart-devices" class="chart-box chart-box--bar"></div>
@@ -398,6 +458,40 @@ watch(deviceView, async () => {
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- 地域 Tab -->
+      <div v-if="!loading && !errMsg && activeTab === 'geo'" class="tab-content">
+        <div class="tab-toolbar">
+          <span></span>
+          <button v-if="geoData.length" class="export-btn" @click="exportGeoCSV">📥 导出 CSV</button>
+        </div>
+        <table v-if="geoData.length" class="page-table">
+          <thead>
+            <tr><th style="width:44px">#</th><th>国家/地区</th><th style="width:90px;text-align:center">PV</th><th style="width:80px;text-align:center">占比</th></tr>
+          </thead>
+          <tbody>
+            <tr v-for="(g, i) in geoData" :key="g.country">
+              <td style="text-align:center" class="rank-cell">{{ i + 1 }}</td>
+              <td>
+                <span v-if="g.country === 'CN'" style="margin-right:6px">🇨🇳</span>
+                <span v-else-if="g.country === 'US'" style="margin-right:6px">🇺🇸</span>
+                <span v-else-if="g.country === 'JP'" style="margin-right:6px">🇯🇵</span>
+                <span v-else-if="g.country === 'SG'" style="margin-right:6px">🇸🇬</span>
+                <span v-else-if="g.country === 'HK'" style="margin-right:6px">🇭🇰</span>
+                <span v-else-if="g.country === 'TW'" style="margin-right:6px">🇹🇼</span>
+                {{ g.country === "CN" ? "中国" : g.country === "US" ? "美国" : g.country === "JP" ? "日本" : g.country === "SG" ? "新加坡" : g.country === "HK" ? "香港" : g.country === "TW" ? "台湾" : g.country }}
+              </td>
+              <td style="text-align:center">{{ g.pv }}</td>
+              <td style="text-align:center">{{ g.percentage }}%</td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-if="!geoData.length" class="empty-hint">
+          <span class="empty-icon">🌍</span>
+          <p>暂无地域数据</p>
+          <p class="empty-sub">需要 GeoIP 数据库支持，详见 server/download_geoip.py</p>
+        </div>
       </div>
     </div>
   </div>
@@ -610,12 +704,37 @@ watch(deviceView, async () => {
   opacity: 0.7;
 }
 
+/* ===== Tab 工具栏（排序 + 导出） ===== */
+.tab-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.export-btn {
+  padding: 5px 14px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.export-btn:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+  background: color-mix(in srgb, var(--vp-c-brand-1) 5%, var(--vp-c-bg));
+}
+
 /* ===== 排序栏 ===== */
 .sort-bar {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 14px;
   font-size: 0.85rem;
 }
 
@@ -736,7 +855,6 @@ watch(deviceView, async () => {
 .device-toggle {
   display: flex;
   gap: 10px;
-  margin-bottom: 16px;
 }
 
 .toggle-btn {

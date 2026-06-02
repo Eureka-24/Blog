@@ -127,3 +127,13 @@ class DeviceBrowser(BaseModel):
 class DevicesResponse(BaseModel):
     os: list[DeviceOS]
     browsers: list[DeviceBrowser]
+
+
+class GeoItem(BaseModel):
+    country: str
+    pv: int
+    percentage: float
+
+
+class GeoResponse(BaseModel):
+    items: list[GeoItem]

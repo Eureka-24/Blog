@@ -1,7 +1,7 @@
 {
   "articleCount": 51,
   "totalWords": 33381,
-  "lastUpdated": "2026-06-01",
+  "lastUpdated": "2026-06-02",
   "categories": [
     {
       "name": "算法",
@@ -43,19 +43,19 @@
       "count": 3
     },
     {
-      "name": "论文",
-      "count": 2
-    },
-    {
-      "name": "存储",
-      "count": 2
-    },
-    {
       "name": "记忆系统",
       "count": 2
     },
     {
       "name": "AI实践",
+      "count": 2
+    },
+    {
+      "name": "论文",
+      "count": 2
+    },
+    {
+      "name": "存储",
       "count": 2
     },
     {
@@ -154,8 +154,8 @@
     "/01.ISAC/Latex使用tips": "Latex使用tips",
     "/01.ISAC/一些通信原理实践中的问题总结": "一些通信原理实践中的问题总结",
     "/01.ISAC/粒子滤波": "粒子滤波",
-    "/02.论文/目录": "论文",
     "/03.AI/目录": "AI",
+    "/02.论文/目录": "论文",
     "/04.杂项/Docker常见问题": "Docker常见问题",
     "/04.杂项/WSL2网络代理配置": "WSL2网络代理配置",
     "/00.算法/算法刷题/AcWing-1223-最大比例": "AcWing-1223-最大比例",
@@ -191,13 +191,13 @@
     "/00.算法/算法学习/计算几何-基础篇": "计算几何-基础篇",
     "/00.算法/算法学习/高精度-分片": "高精度-分片",
     "/00.算法/算法学习/高精度-复杂": "高精度-复杂",
-    "/02.论文/00.存储/HotRing A Hotspot-Aware In-Memory": "HotRing A Hotspot-Aware In-Memory Key-Value Store 论文总结",
-    "/02.论文/00.存储/PacificA Replication in Log-Based Distributed Storage Systems": "PacificA Replication in Log-Based Distributed Storage Systems",
     "/03.AI/AI学习/Agent开发学习记录": "Agent开发学习记录",
     "/03.AI/AI学习/HelloAgents": "HelloAgents",
     "/03.AI/AI学习/Mem0": "mem0 记忆引擎源码剖析：当 AI 学会了\"记事儿\"",
     "/03.AI/AI学习/记忆系统回忆录": "记忆系统深度复盘：Agent 应该记住什么、怎么记住、记住多久？",
     "/03.AI/AI实践/Claude Code 使用技巧": "Claude Code 使用技巧",
-    "/03.AI/AI实践/ECC学习": "ECC学习"
+    "/03.AI/AI实践/ECC学习": "ECC学习",
+    "/02.论文/00.存储/HotRing A Hotspot-Aware In-Memory": "HotRing A Hotspot-Aware In-Memory Key-Value Store 论文总结",
+    "/02.论文/00.存储/PacificA Replication in Log-Based Distributed Storage Systems": "PacificA Replication in Log-Based Distributed Storage Systems"
   }
 }

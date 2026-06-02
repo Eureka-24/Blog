@@ -14,6 +14,7 @@ from schemas import (
     PageStatsResponse, PageStatsItem,
     SourcesResponse, SourceItem,
     DevicesResponse, DeviceOS, DeviceBrowser,
+    GeoResponse, GeoItem,
 )
 from auth import verify_token
 
@@ -217,3 +218,28 @@ def get_devices(
     ]
 
     return DevicesResponse(os=os_list, browsers=br_list)
+
+
+@router.get("/geo", response_model=GeoResponse)
+def get_geo(
+    days: int = Query(30, description="天数"),
+    db: Session = Depends(get_db),
+):
+    """访客地域分布"""
+    since = datetime.now() - timedelta(days=days)
+
+    rows = (
+        db.query(Visit.country, func.count(Visit.id).label("pv"))
+        .filter(Visit.created_at >= since, Visit.country.isnot(None))
+        .group_by(Visit.country)
+        .order_by(func.count(Visit.id).desc())
+        .all()
+    )
+
+    total = sum(r.pv for r in rows) or 1
+    items = [
+        GeoItem(country=row.country or "未知", pv=row.pv, percentage=round(row.pv / total * 100, 1))
+        for row in rows
+    ]
+
+    return GeoResponse(items=items)
