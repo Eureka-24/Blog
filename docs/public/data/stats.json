@@ -43,10 +43,6 @@
       "count": 3
     },
     {
-      "name": "记忆系统",
-      "count": 2
-    },
-    {
       "name": "AI实践",
       "count": 2
     },
@@ -59,11 +55,23 @@
       "count": 2
     },
     {
+      "name": "记忆系统",
+      "count": 2
+    },
+    {
       "name": "Docker",
       "count": 1
     },
     {
       "name": "WSL",
+      "count": 1
+    },
+    {
+      "name": "Claude Code",
+      "count": 1
+    },
+    {
+      "name": "Cluade Code",
       "count": 1
     },
     {
@@ -76,14 +84,6 @@
     },
     {
       "name": "mem0",
-      "count": 1
-    },
-    {
-      "name": "Claude Code",
-      "count": 1
-    },
-    {
-      "name": "Cluade Code",
       "count": 1
     }
   ],
@@ -151,13 +151,13 @@
   "pathTitleMap": {
     "/personal": "支持这个项目",
     "/00.算法/目录": "算法",
-    "/03.AI/目录": "AI",
-    "/02.论文/目录": "论文",
     "/01.ISAC/Latex使用tips": "Latex使用tips",
     "/01.ISAC/一些通信原理实践中的问题总结": "一些通信原理实践中的问题总结",
     "/01.ISAC/粒子滤波": "粒子滤波",
+    "/03.AI/目录": "AI",
     "/04.杂项/Docker常见问题": "Docker常见问题",
     "/04.杂项/WSL2网络代理配置": "WSL2网络代理配置",
+    "/02.论文/目录": "论文",
     "/00.算法/算法刷题/AcWing-1223-最大比例": "AcWing-1223-最大比例",
     "/00.算法/算法刷题/Area-of-Polygons-POJ-2043-扫描线": "Area-of-Polygons-POJ-2043-扫描线",
     "/00.算法/算法刷题/CF311E-Biologits-最小割": "CF311E-Biologits-最小割",
@@ -191,13 +191,162 @@
     "/00.算法/算法学习/计算几何-基础篇": "计算几何-基础篇",
     "/00.算法/算法学习/高精度-分片": "高精度-分片",
     "/00.算法/算法学习/高精度-复杂": "高精度-复杂",
-    "/03.AI/AI学习/Agent开发学习记录": "Agent开发学习记录",
-    "/03.AI/AI学习/HelloAgents": "HelloAgents",
-    "/03.AI/AI学习/Mem0": "mem0 记忆引擎源码剖析：当 AI 学会了\"记事儿\"",
-    "/03.AI/AI学习/记忆系统回忆录": "记忆系统深度复盘：Agent 应该记住什么、怎么记住、记住多久？",
     "/03.AI/AI实践/Claude Code 使用技巧": "Claude Code 使用技巧",
     "/03.AI/AI实践/ECC学习": "ECC学习",
     "/02.论文/00.存储/HotRing A Hotspot-Aware In-Memory": "HotRing A Hotspot-Aware In-Memory Key-Value Store 论文总结",
-    "/02.论文/00.存储/PacificA Replication in Log-Based Distributed Storage Systems": "PacificA Replication in Log-Based Distributed Storage Systems"
+    "/02.论文/00.存储/PacificA Replication in Log-Based Distributed Storage Systems": "PacificA Replication in Log-Based Distributed Storage Systems",
+    "/03.AI/AI学习/Agent开发学习记录": "Agent开发学习记录",
+    "/03.AI/AI学习/HelloAgents": "HelloAgents",
+    "/03.AI/AI学习/Mem0": "mem0 记忆引擎源码剖析：当 AI 学会了\"记事儿\"",
+    "/03.AI/AI学习/记忆系统回忆录": "记忆系统深度复盘：Agent 应该记住什么、怎么记住、记住多久？"
+  },
+  "pathTagsMap": {
+    "/01.ISAC/Latex使用tips": [
+      "ISAC"
+    ],
+    "/01.ISAC/一些通信原理实践中的问题总结": [
+      "ISAC"
+    ],
+    "/01.ISAC/粒子滤波": [
+      "ISAC"
+    ],
+    "/04.杂项/Docker常见问题": [
+      "Docker"
+    ],
+    "/04.杂项/WSL2网络代理配置": [
+      "WSL"
+    ],
+    "/00.算法/算法刷题/AcWing-1223-最大比例": [
+      "算法"
+    ],
+    "/00.算法/算法刷题/Area-of-Polygons-POJ-2043-扫描线": [
+      "算法"
+    ],
+    "/00.算法/算法刷题/CF311E-Biologits-最小割": [
+      "算法"
+    ],
+    "/00.算法/算法刷题/Crosses-and-Crosses-POJ-3537-博弈论": [
+      "算法"
+    ],
+    "/00.算法/算法刷题/Divisors-CodeForces-1033D-数论": [
+      "算法"
+    ],
+    "/00.算法/算法刷题/NC13594-选择困难症-折半搜索-二分": [
+      "算法"
+    ],
+    "/00.算法/算法刷题/NOI2008-志愿者招募-费用流": [
+      "算法"
+    ],
+    "/00.算法/算法刷题/蓝桥杯-冰雹数-DP": [
+      "算法"
+    ],
+    "/00.算法/算法刷题/蓝桥杯-压缩变换-可持久化线段树": [
+      "算法"
+    ],
+    "/00.算法/算法刷题/蓝桥杯-异或变换": [
+      "算法"
+    ],
+    "/00.算法/算法刷题/蓝桥杯-游园安排-LIS": [
+      "算法"
+    ],
+    "/00.算法/算法刷题/蓝桥杯-翻转括号序列-线段树": [
+      "算法"
+    ],
+    "/00.算法/算法刷题/蓝桥杯-蓝跳跳-矩阵快速幂-70数据": [
+      "算法"
+    ],
+    "/00.算法/算法刷题/蓝桥杯-装饰珠": [
+      "算法"
+    ],
+    "/00.算法/算法学习/A-star算法-BFS-k短路": [
+      "算法"
+    ],
+    "/00.算法/算法学习/IDA-star算法-DFS": [
+      "算法"
+    ],
+    "/00.算法/算法学习/N数码问题解的存在-可以到三维": [
+      "算法"
+    ],
+    "/00.算法/算法学习/shift-and-shift-or": [
+      "算法"
+    ],
+    "/00.算法/算法学习/博弈论": [
+      "算法"
+    ],
+    "/00.算法/算法学习/字典树": [
+      "算法"
+    ],
+    "/00.算法/算法学习/差分约束": [
+      "算法"
+    ],
+    "/00.算法/算法学习/并查集": [
+      "算法"
+    ],
+    "/00.算法/算法学习/康托展开": [
+      "算法"
+    ],
+    "/00.算法/算法学习/数论": [
+      "算法"
+    ],
+    "/00.算法/算法学习/最大匹配": [
+      "算法"
+    ],
+    "/00.算法/算法学习/最小生成树": [
+      "算法"
+    ],
+    "/00.算法/算法学习/最短路-最长路-拓扑排序-次短路-k短路": [
+      "算法"
+    ],
+    "/00.算法/算法学习/线段树": [
+      "算法"
+    ],
+    "/00.算法/算法学习/网络流": [
+      "算法"
+    ],
+    "/00.算法/算法学习/计算几何-几何篇": [
+      "算法"
+    ],
+    "/00.算法/算法学习/计算几何-基础篇": [
+      "算法"
+    ],
+    "/00.算法/算法学习/高精度-分片": [
+      "算法"
+    ],
+    "/00.算法/算法学习/高精度-复杂": [
+      "算法"
+    ],
+    "/03.AI/AI实践/Claude Code 使用技巧": [
+      "AI实践",
+      "Claude Code"
+    ],
+    "/03.AI/AI实践/ECC学习": [
+      "AI实践",
+      "Cluade Code"
+    ],
+    "/02.论文/00.存储/HotRing A Hotspot-Aware In-Memory": [
+      "论文",
+      "存储"
+    ],
+    "/02.论文/00.存储/PacificA Replication in Log-Based Distributed Storage Systems": [
+      "论文",
+      "存储"
+    ],
+    "/03.AI/AI学习/Agent开发学习记录": [
+      "AI学习",
+      "Agent"
+    ],
+    "/03.AI/AI学习/HelloAgents": [
+      "AI学习",
+      "Agent框架"
+    ],
+    "/03.AI/AI学习/Mem0": [
+      "AI学习",
+      "记忆系统",
+      "mem0"
+    ],
+    "/03.AI/AI学习/记忆系统回忆录": [
+      "AI学习",
+      "记忆系统"
+    ]
   }
 }

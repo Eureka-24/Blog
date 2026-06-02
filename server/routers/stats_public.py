@@ -1,6 +1,8 @@
 """
 公开统计接口（无需认证）
 """
+import json
+import os
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
@@ -9,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Visit, Like, ReadingDuration
-from schemas import PageStats, HotArticle, HotArticlesResponse
+from schemas import PageStats, HotArticle, HotArticlesResponse, RelatedArticle, RelatedArticlesResponse
 
 router = APIRouter(prefix="/api/v1/stats", tags=["stats_public"])
 
@@ -96,3 +98,96 @@ def get_hot_articles(
         ))
 
     return HotArticlesResponse(items=items)
+
+
+# ─── 辅助函数：加载 stats.json ───
+
+def _load_stats_json() -> dict:
+    """加载构建时生成的 stats.json（包含 pathTagsMap）"""
+    stats_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        "..", "docs", "public", "data", "stats.json",
+    )
+    if os.path.exists(stats_path):
+        with open(stats_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+
+def _load_path_title_map() -> dict:
+    return _load_stats_json().get("pathTitleMap", {})
+
+
+def _load_path_tags_map() -> dict:
+    return _load_stats_json().get("pathTagsMap", {})
+
+
+@router.get("/related", response_model=RelatedArticlesResponse)
+def get_related_articles(
+    path: str = Query(..., description="当前文章路径"),
+    limit: int = Query(5, description="返回条数"),
+    db: Session = Depends(get_db),
+):
+    """基于标签关联推荐相关文章
+
+    算法：找出与当前文章共享标签最多的其他文章，按匹配度排序，
+    匹配相同时按 PV 降序排列。
+    """
+    path_tags_map = _load_path_tags_map()
+    path_title_map = _load_path_title_map()
+
+    # 规范路径：URL 解码 + 去掉 .html 后缀以匹配 stats.json 中的键
+    from urllib.parse import unquote
+    clean_path = unquote(path).replace(".html", "")
+
+    # 当前文章的标签
+    current_tags = set(path_tags_map.get(clean_path, []))
+    if not current_tags:
+        return RelatedArticlesResponse(items=[])
+
+    # 计算其他文章的标签重叠度
+    candidates: list[tuple[str, int]] = []
+    for other_path, tags in path_tags_map.items():
+        if other_path == clean_path:
+            continue
+        overlap = len(current_tags & set(tags))
+        if overlap > 0:
+            candidates.append((other_path, overlap))
+
+    # 按重叠度降序，重叠相同时按 PV 降序
+    candidates.sort(key=lambda x: (-x[1]))
+
+    # 取 top N
+    top_paths = [c[0] for c in candidates[:limit]]
+
+    # 补充统计数据
+    items = []
+    for p in top_paths:
+        try:
+            pv = db.query(func.count(Visit.id)).filter(Visit.path == p).scalar() or 0
+            avg_dur = (
+                db.query(func.avg(ReadingDuration.duration_seconds))
+                .filter(ReadingDuration.path == p)
+                .scalar()
+            ) or 0.0
+        except Exception:
+            pv = 0
+            avg_dur = 0.0
+
+        clean_p = unquote(p).replace(".html", "")
+        title = path_title_map.get(clean_p, clean_p.split("/")[-1])
+        tags = path_tags_map.get(clean_p, [])
+
+        items.append(RelatedArticle(
+            path=clean_p,
+            title=title,
+            tags=tags,
+            matchScore=len(current_tags & set(tags)),
+            pv=pv,
+            avgDuration=round(float(avg_dur), 1),
+        ))
+
+    # 按匹配度 + PV 二次排序
+    items.sort(key=lambda x: (-x.matchScore, -x.pv))
+
+    return RelatedArticlesResponse(items=items)

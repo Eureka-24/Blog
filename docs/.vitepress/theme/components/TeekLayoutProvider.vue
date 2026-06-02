@@ -8,6 +8,7 @@ import PageMeta from "./PageMeta.vue";
 import LikeButton from "./LikeButton.vue";
 import HotSidebar from "./HotSidebar.vue";
 import TopArticleReplacement from "./TopArticleReplacement.vue";
+import RelatedArticles from "./RelatedArticles.vue";
 
 const route = useRoute();
 
@@ -45,6 +46,12 @@ const isArticlePage = computed(() => {
       <ClientOnly>
         <div v-if="isArticlePage" class="stats-article-footer">
           <LikeButton />
+        </div>
+      </ClientOnly>
+      <!-- 相关文章推荐 -->
+      <ClientOnly>
+        <div v-if="isArticlePage" class="stats-related-wrapper">
+          <RelatedArticles />
         </div>
       </ClientOnly>
     </template>
@@ -88,5 +95,12 @@ const isArticlePage = computed(() => {
   padding: 32px 0;
   border-top: 1px solid var(--vp-c-divider);
   margin-top: 32px;
+}
+
+.stats-related-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-bottom: 24px;
+  border-top: 1px solid var(--vp-c-divider);
 }
 </style>

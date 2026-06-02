@@ -150,3 +150,37 @@ class GeoCityItem(BaseModel):
 
 class GeoCityResponse(BaseModel):
     items: list[GeoCityItem]
+
+
+# ─── 文章质量评分 ───
+
+class QualityScoreItem(BaseModel):
+    path: str
+    title: str
+    pv: int
+    avgDuration: float
+    likeCount: int
+    bounceRate: float
+    score: float
+
+
+class QualityScoreResponse(BaseModel):
+    items: list[QualityScoreItem]
+    total: int
+    page: int
+    size: int
+
+
+# ─── 相关文章推荐 ───
+
+class RelatedArticle(BaseModel):
+    path: str
+    title: str
+    tags: list[str]
+    matchScore: int
+    pv: int
+    avgDuration: float
+
+
+class RelatedArticlesResponse(BaseModel):
+    items: list[RelatedArticle]

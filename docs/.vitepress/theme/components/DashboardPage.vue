@@ -4,10 +4,10 @@ import { useStatsApi, exportCSV } from "../composables/useStatsApi"
 import LoginDialog from "./LoginDialog.vue"
 import * as echarts from "echarts"
 
-const { isAuthenticated, logout, getOverview, getTrend, getPages, getSources, getDevices, getGeo, getGeoCities } = useStatsApi()
+const { isAuthenticated, logout, getOverview, getTrend, getPages, getSources, getDevices, getGeo, getGeoCities, getQualityScores } = useStatsApi()
 
 const showLogin = ref(!isAuthenticated.value)
-const activeTab = ref<"overview" | "pages" | "sources" | "devices" | "geo">("overview")
+const activeTab = ref<"overview" | "pages" | "sources" | "devices" | "geo" | "quality">("overview")
 const loading = ref(false)
 const errMsg = ref("")
 const overview = ref<any>(null)
@@ -23,6 +23,12 @@ const geoCityData = ref<any[]>([])
 const geoView = ref<"country" | "city">("country")
 const pathTitleMap = ref<Record<string, string>>({})
 
+// 质量评分
+const qualityData = ref<any[]>([])
+const qualityTotal = ref(0)
+const qualitySort = ref("score")
+const qualityPage = ref(1)
+
 let chartTrend: any = null
 let chartSources: any = null
 let chartDevices: any = null
@@ -30,6 +36,7 @@ let chartDevices: any = null
 const tabs = [
   { key: "overview" as const, label: "总览", icon: "📊" },
   { key: "pages" as const, label: "排行", icon: "📄" },
+  { key: "quality" as const, label: "质量评分", icon: "⭐" },
   { key: "sources" as const, label: "来源", icon: "🔗" },
   { key: "devices" as const, label: "设备", icon: "💻" },
   { key: "geo" as const, label: "地域", icon: "🌍" },
@@ -61,10 +68,11 @@ async function loadData() {
     try { return await fn() } catch (e: any) { errors.push(`${label}: ${e.message}`); console.error(e); return null }
   }
 
-  const [ov, tr, pg, src, dev, geo, geoCity] = await Promise.all([
+  const [ov, tr, pg, ql, src, dev, geo, geoCity] = await Promise.all([
     safeFetch(() => getOverview(), "总览"),
     safeFetch(() => getTrend(30), "趋势"),
     safeFetch(() => getPages(sortBy.value, pageNo.value, 20), "文章排行"),
+    safeFetch(() => getQualityScores(qualitySort.value, qualityPage.value, 20), "质量评分"),
     safeFetch(() => getSources(7), "来源"),
     safeFetch(() => getDevices(7), "设备"),
     safeFetch(() => getGeo(30), "地域(国家)"),
@@ -73,6 +81,7 @@ async function loadData() {
   if (ov) overview.value = ov
   if (tr) trendData.value = tr.items
   if (pg) { pageData.value = pg.items; pageTotal.value = pg.total }
+  if (ql) { qualityData.value = ql.items; qualityTotal.value = ql.total }
   if (src) sourceData.value = src.items
   if (dev) deviceData.value = dev
   if (geo) geoData.value = geo.items
@@ -245,6 +254,51 @@ function exportDevicesCSV() {
   ], "设备分布")
 }
 
+// ─── 质量评分 ───
+async function changeQualitySort(s: string) {
+  qualitySort.value = s; qualityPage.value = 1
+  const res = await getQualityScores(s, 1, 20)
+  if (res) { qualityData.value = res.items; qualityTotal.value = res.total }
+}
+
+async function changeQualityPage(n: number) {
+  qualityPage.value = n
+  const res = await getQualityScores(qualitySort.value, n, 20)
+  if (res) { qualityData.value = res.items; qualityTotal.value = res.total }
+}
+
+function exportQualityCSV() {
+  const data = qualityData.value.map((p: any) => ({
+    title: getArticleTitle(p.path),
+    path: p.path,
+    score: p.score,
+    pv: p.pv,
+    avgDuration: Math.round(p.avgDuration) + "s",
+    likeCount: p.likeCount,
+    bounceRate: (p.bounceRate * 100).toFixed(1) + "%",
+  }))
+  exportCSV(data, [
+    { key: "title", label: "文章标题" },
+    { key: "path", label: "路径" },
+    { key: "score", label: "综合评分" },
+    { key: "pv", label: "PV" },
+    { key: "avgDuration", label: "平均阅读" },
+    { key: "likeCount", label: "点赞" },
+    { key: "bounceRate", label: "跳出率" },
+  ], "文章质量评分")
+}
+
+function getScoreColor(score: number): string {
+  if (score >= 80) return '#52c41a'
+  if (score >= 60) return '#1890ff'
+  if (score >= 40) return '#faad14'
+  return '#ff4d4f'
+}
+
+function formatBounceRate(rate: number): string {
+  return (rate * 100).toFixed(1) + '%'
+}
+
 function exportGeoCSV() {
   if (geoView.value === "country") {
     exportCSV(geoData.value, [
@@ -397,6 +451,70 @@ watch(deviceView, async () => {
           <span class="empty-icon">📄</span>
           <p>暂无页面数据</p>
           <p class="empty-sub">访问几篇文章后，排行将在这里显示</p>
+        </div>
+      </div>
+
+      <!-- 质量评分 Tab -->
+      <div v-if="!loading && !errMsg && activeTab === 'quality'" class="tab-content">
+        <div class="tab-toolbar">
+          <div class="sort-bar">
+            <span class="sort-label">排序：</span>
+            <button :class="{ active: qualitySort === 'score' }" @click="changeQualitySort('score')">综合评分</button>
+            <button :class="{ active: qualitySort === 'pv' }" @click="changeQualitySort('pv')">浏览量</button>
+            <button :class="{ active: qualitySort === 'duration' }" @click="changeQualitySort('duration')">阅读时长</button>
+            <button :class="{ active: qualitySort === 'likes' }" @click="changeQualitySort('likes')">点赞数</button>
+            <button :class="{ active: qualitySort === 'bounce' }" @click="changeQualitySort('bounce')">跳出率</button>
+          </div>
+          <button v-if="qualityData.length" class="export-btn" @click="exportQualityCSV">📥 导出 CSV</button>
+        </div>
+
+        <!-- 评分说明 -->
+        <div class="quality-info">
+          <span class="quality-info-icon">💡</span>
+          <span>评分算法：PV×25% + 平均阅读时长×35% + (1-跳出率)×25% + 点赞数×15%（归一化后百分制）</span>
+        </div>
+
+        <div v-if="qualityData.length">
+          <table class="page-table">
+            <thead>
+              <tr>
+                <th style="width:44px">#</th>
+                <th>文章标题</th>
+                <th style="width:72px;text-align:center">⭐ 评分</th>
+                <th style="width:64px;text-align:center">PV</th>
+                <th style="width:70px;text-align:center">阅读时长</th>
+                <th style="width:56px;text-align:center">点赞</th>
+                <th style="width:70px;text-align:center">跳出率</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(p, i) in qualityData" :key="p.path">
+                <td style="text-align:center" class="rank-cell">{{ (qualityPage - 1) * 20 + i + 1 }}</td>
+                <td class="page-path" :title="p.path">
+                  <a :href="p.path">{{ p.title }}</a>
+                </td>
+                <td style="text-align:center;font-weight:700;font-size:0.9rem" :style="{ color: getScoreColor(p.score) }">
+                  {{ p.score }}
+                </td>
+                <td style="text-align:center">{{ p.pv }}</td>
+                <td style="text-align:center">{{ Math.round(p.avgDuration) }}s</td>
+                <td style="text-align:center">{{ p.likeCount }}</td>
+                <td style="text-align:center" :style="{ color: p.bounceRate > 0.5 ? '#ff4d4f' : 'inherit' }">
+                  {{ formatBounceRate(p.bounceRate) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <button :disabled="qualityPage <= 1" @click="changeQualityPage(qualityPage - 1)">‹ 上一页</button>
+            <span class="page-info">{{ qualityPage }} / {{ Math.ceil(qualityTotal / 20) || 1 }}</span>
+            <button :disabled="qualityPage >= Math.ceil(qualityTotal / 20)" @click="changeQualityPage(qualityPage + 1)">下一页 ›</button>
+          </div>
+        </div>
+        <div v-else class="empty-hint">
+          <span class="empty-icon">⭐</span>
+          <p>暂无评分数据</p>
+          <p class="empty-sub">访问一些文章后，质量评分将在这里显示</p>
         </div>
       </div>
 
@@ -910,6 +1028,26 @@ watch(deviceView, async () => {
   background: var(--vp-c-brand-1);
   color: #fff;
   border-color: var(--vp-c-brand-1);
+}
+
+/* ===== 质量评分 - 提示信息 ===== */
+.quality-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--vp-c-brand-1) 6%, var(--vp-c-bg-soft));
+  border: 1px solid color-mix(in srgb, var(--vp-c-brand-1) 18%, transparent);
+  font-size: 0.8rem;
+  color: var(--vp-c-text-2);
+  line-height: 1.4;
+}
+
+.quality-info-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 /* ===== 响应式 ===== */

@@ -35,6 +35,7 @@ interface Stats {
   timeline: Record<string, Record<string, number>>
   recentArticles: RecentArticle[]
   pathTitleMap: Record<string, string>
+  pathTagsMap: Record<string, string[]>  // path → tags 映射
 }
 
 function countWords(text: string): number {
@@ -71,6 +72,7 @@ async function main() {
     timeline: {},
     recentArticles: [],
     pathTitleMap: {},
+    pathTagsMap: {},
   }
 
   const categoryMap = new Map<string, number>()
@@ -113,6 +115,17 @@ async function main() {
       tagMap.set(tag, (tagMap.get(tag) || 0) + 1)
     }
 
+    // 相对路径
+    const relPath = relative(docsDir, file)
+      .replace(/\\/g, '/')
+      .replace(/\.md$/, '')
+    const cleanPath = '/' + relPath
+
+    // 标签映射（即使没有日期也保留）
+    if (tags.length > 0) {
+      stats.pathTagsMap[cleanPath] = tags
+    }
+
     // 时间线
     if (data.date) {
       const dateStr = typeof data.date === 'string'
@@ -121,12 +134,6 @@ async function main() {
       const [year, month] = dateStr.split('-')
       if (!stats.timeline[year]) stats.timeline[year] = {}
       stats.timeline[year][month] = (stats.timeline[year][month] || 0) + 1
-
-      // 相对路径
-      const relPath = relative(docsDir, file)
-        .replace(/\\/g, '/')
-        .replace(/\.md$/, '')
-      const cleanPath = '/' + relPath
 
       articles.push({
         title: data.title,

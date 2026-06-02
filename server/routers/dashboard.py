@@ -16,6 +16,7 @@ from schemas import (
     DevicesResponse, DeviceOS, DeviceBrowser,
     GeoResponse, GeoItem,
     GeoCityResponse, GeoCityItem,
+    QualityScoreResponse, QualityScoreItem,
 )
 from auth import verify_token
 
@@ -244,6 +245,140 @@ def get_geo(
     ]
 
     return GeoResponse(items=items)
+
+
+@router.get("/quality-scores", response_model=QualityScoreResponse)
+def get_quality_scores(
+    sort: str = Query("score", description="排序字段: score/pv/duration/likes/bounce"),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    """文章质量评分排行
+
+    评分算法: score = pv_norm*0.25 + duration_norm*0.35 + (1-bounce_rate)*0.25 + likes_norm*0.15
+    """
+    # 获取所有有访问记录的页面及其基础指标
+    subq = (
+        db.query(
+            Visit.path,
+            func.count(Visit.id).label("pv"),
+            func.count(func.distinct(Visit.session_id)).label("sessions"),
+        )
+        .group_by(Visit.path)
+        .subquery()
+    )
+
+    rows = db.query(subq).all()
+    total = len(rows)
+
+    # 计算每个页面的详细指标
+    items_raw = []
+    for row in rows:
+        # 平均阅读时长
+        avg_duration = (
+            db.query(func.avg(ReadingDuration.duration_seconds))
+            .filter(ReadingDuration.path == row.path)
+            .scalar()
+        ) or 0.0
+
+        # 点赞数
+        like_count = (
+            db.query(func.count(Like.id)).filter(Like.path == row.path).scalar() or 0
+        )
+
+        # 跳出率：有访问但无阅读时长记录的 session 占比
+        sessions_with_duration = (
+            db.query(func.count(func.distinct(ReadingDuration.session_id)))
+            .filter(ReadingDuration.path == row.path)
+            .scalar()
+        ) or 0
+        total_sessions = row.sessions or 1
+        bounce_rate = 1.0 - (sessions_with_duration / total_sessions)
+
+        items_raw.append({
+            "path": row.path,
+            "pv": row.pv,
+            "avgDuration": round(float(avg_duration), 1),
+            "likeCount": like_count,
+            "bounceRate": round(bounce_rate, 4),
+        })
+
+    # 归一化 + 计算综合评分
+    max_pv = max((i["pv"] for i in items_raw), default=1) or 1
+    max_duration = max((i["avgDuration"] for i in items_raw), default=1) or 1
+    max_likes = max((i["likeCount"] for i in items_raw), default=1) or 1
+
+    for i in items_raw:
+        pv_norm = i["pv"] / max_pv
+        dur_norm = min(i["avgDuration"] / max_duration, 1.0)
+        likes_norm = i["likeCount"] / max_likes if max_likes > 0 else 0
+        quality_norm = 1.0 - i["bounceRate"]
+
+        score = (
+            pv_norm * 0.25
+            + dur_norm * 0.35
+            + quality_norm * 0.25
+            + likes_norm * 0.15
+        )
+        i["score"] = round(score * 100, 1)  # 转为百分制
+
+    # 排序
+    sort_map = {
+        "score": lambda x: x["score"],
+        "pv": lambda x: x["pv"],
+        "duration": lambda x: x["avgDuration"],
+        "likes": lambda x: x["likeCount"],
+        "bounce": lambda x: -x["bounceRate"],
+    }
+    key_fn = sort_map.get(sort, sort_map["score"])
+    items_raw.sort(key=key_fn, reverse=(sort != "bounce"))
+
+    # 分页
+    offset = (page - 1) * size
+    page_items = items_raw[offset:offset + size]
+
+    # 加载文章标题映射，处理 URL 编码
+    try:
+        import json, os
+        from urllib.parse import unquote
+        stats_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "docs", "public", "data", "stats.json")
+        if os.path.exists(stats_path):
+            with open(stats_path, "r", encoding="utf-8") as f:
+                stats_data = json.load(f)
+            path_title_map = stats_data.get("pathTitleMap", {})
+        else:
+            path_title_map = {}
+    except Exception:
+        path_title_map = {}
+
+    def _lookup_title(raw_path: str) -> str:
+        """从数据库路径查找文章标题，处理 .html 后缀和 URL 编码"""
+        clean = raw_path.replace(".html", "")
+        # 尝试直接查找
+        if clean in path_title_map:
+            return path_title_map[clean]
+        # 尝试 URL 解码后查找
+        decoded = unquote(clean)
+        if decoded in path_title_map:
+            return path_title_map[decoded]
+        # 兜底：取路径最后一段
+        return decoded.split("/")[-1] if "/" in decoded else decoded
+
+    items = [
+        QualityScoreItem(
+            path=i["path"],
+            title=_lookup_title(i["path"]),
+            pv=i["pv"],
+            avgDuration=i["avgDuration"],
+            likeCount=i["likeCount"],
+            bounceRate=i["bounceRate"],
+            score=i["score"],
+        )
+        for i in page_items
+    ]
+
+    return QualityScoreResponse(items=items, total=total, page=page, size=size)
 
 
 @router.get("/geo/cities", response_model=GeoCityResponse)

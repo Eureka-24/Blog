@@ -117,6 +117,40 @@ export interface GeoCityResponse {
   items: GeoCityItem[]
 }
 
+// ─── 文章质量评分 ───
+
+export interface QualityScoreItem {
+  path: string
+  title: string
+  pv: number
+  avgDuration: number
+  likeCount: number
+  bounceRate: number
+  score: number
+}
+
+export interface QualityScoreResponse {
+  items: QualityScoreItem[]
+  total: number
+  page: number
+  size: number
+}
+
+// ─── 相关文章推荐 ───
+
+export interface RelatedArticle {
+  path: string
+  title: string
+  tags: string[]
+  matchScore: number
+  pv: number
+  avgDuration: number
+}
+
+export interface RelatedArticlesResponse {
+  items: RelatedArticle[]
+}
+
 // ─── API 封装 ───
 
 async function request<T>(
@@ -291,6 +325,24 @@ export function useStatsApi() {
     )
   }
 
+  /** 获取文章质量评分排行 */
+  async function getQualityScores(sort = 'score', page = 1, size = 20) {
+    return request<QualityScoreResponse>(
+      'GET',
+      `/dashboard/quality-scores?sort=${sort}&page=${page}&size=${size}`,
+      undefined,
+      true,
+    )
+  }
+
+  /** 获取相关文章推荐 */
+  async function getRelatedArticles(path: string, limit = 5) {
+    return request<RelatedArticlesResponse>(
+      'GET',
+      `/stats/related?path=${encodeURIComponent(path)}&limit=${limit}`,
+    )
+  }
+
   return {
     sessionId,
     token,
@@ -309,6 +361,8 @@ export function useStatsApi() {
     getDevices,
     getGeo,
     getGeoCities,
+    getQualityScores,
+    getRelatedArticles,
   }
 }
 
