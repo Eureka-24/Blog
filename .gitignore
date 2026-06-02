@@ -36,3 +36,5 @@ coverage
 CLAUDE.md
 
 server/stats.db
+# GeoIP 数据库（通过 server/download_geoip.py 下载）
+*.mmdb
