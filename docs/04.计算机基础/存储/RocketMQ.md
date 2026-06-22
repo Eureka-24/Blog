@@ -474,16 +474,16 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A[Producer 发送消息<br/>waitStoreMsgOK=true] --> B[消息写入 MappedFile]
-    B --> C[创建 GroupCommitRequest<br/>放入请求队列]
-    C --> D[Producer 线程阻塞等待<br/>flushOkFuture.get]
-    E[GroupCommitService 线程] --> F[swapRequests<br/>交换读写队列]
-    F --> G[mappedFileQueue.flush(0)]
-    G --> H{flushedWhere >= request.nextOffset?}
-    H -->|Yes| I[request.wakeupCustomer(PUT_OK)]
-    H -->|No| J[Thread.sleep(1ms)<br/>重试最多 1000 次]
+    A["Producer 发送消息<br/>waitStoreMsgOK=true"] --> B["消息写入 MappedFile"]
+    B --> C["创建 GroupCommitRequest<br/>放入请求队列"]
+    C --> D["Producer 线程阻塞等待<br/>flushOkFuture.get"]
+    E["GroupCommitService 线程"] --> F["swapRequests<br/>交换读写队列"]
+    F --> G["mappedFileQueue.flush(0)"]
+    G --> H{"flushedWhere >= request.nextOffset?"}
+    H -->|Yes| I["request.wakeupCustomer(PUT_OK)"]
+    H -->|No| J["Thread.sleep(1ms)<br/>重试最多 1000 次"]
     J --> H
-    I --> K[Producer 线程被唤醒<br/>返回成功]
+    I --> K["Producer 线程被唤醒<br/>返回成功"]
     
     style C fill:#f9f,stroke:#333
     style D fill:#f9f,stroke:#333
@@ -519,27 +519,33 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Start[消息到达 CommitLog] --> Q1{flushDiskType?}
+    Start["消息到达 CommitLog"] --> Q1{"flushDiskType?"}
     
-    Q1 -->|SYNC_FLUSH| Q2{writeWithoutMmap?}
-    Q2 -->|Yes| W3_S[C: 写入 FileChannel<br/>等 GroupCommitService<br/>flush → fileChannel.force]
-    Q2 -->|No| Q3{transientStorePoolEnable?}
-    Q3 -->|Yes| W2_S[D: 写入 writeBuffer<br/>等 GroupCommitService<br/>commit0 → flush → fileChannel.force]
-    Q3 -->|No| W1_S[A: 写入 mappedByteBuffer<br/>等 GroupCommitService<br/>flush → mmap.force]
+    Q1 -->|SYNC_FLUSH| Q2{"writeWithoutMmap?"}
+    Q2 -->|Yes| W3_S["线路三: 写入 FileChannel<br/>等 GroupCommitService<br/>flush → fileChannel.force"]
+    Q2 -->|No| Q3{"transientStorePoolEnable?"}
+    Q3 -->|Yes| W2_S["线路二: 写入 writeBuffer<br/>等 GroupCommitService<br/>commit0 → flush → fileChannel.force"]
+    Q3 -->|No| W1_S["线路一: 写入 mappedByteBuffer<br/>等 GroupCommitService<br/>flush → mmap.force"]
     
-    Q1 -->|ASYNC_FLUSH| Q4{writeWithoutMmap?}
-    Q4 -->|Yes| W3_A[F: 写入 FileChannel<br/>直接返回成功<br/>后台 FlushRealTimeService 批量刷]
-    Q4 -->|No| Q5{transientStorePoolEnable?}
-    Q5 -->|Yes| W2_A[E: 写入 writeBuffer<br/>直接返回成功<br/>后台 CommitRealTimeService commit<br/>后台 FlushRealTimeService flush]
-    Q5 -->|No| W1_A[B: 写入 mappedByteBuffer<br/>直接返回成功<br/>后台 FlushRealTimeService 批量刷]
+    Q1 -->|ASYNC_FLUSH| Q4{"writeWithoutMmap?"}
+    Q4 -->|Yes| W3_A["线路三: 写入 FileChannel<br/>直接返回成功<br/>后台 FlushRealTimeService 批量刷"]
+    Q4 -->|No| Q5{"transientStorePoolEnable?"}
+    Q5 -->|Yes| W2_A["线路二: 写入 writeBuffer<br/>直接返回成功<br/>后台 CommitRealTimeService commit<br/>后台 FlushRealTimeService flush"]
+    Q5 -->|No| W1_A["线路一: 写入 mappedByteBuffer<br/>直接返回成功<br/>后台 FlushRealTimeService 批量刷"]
     
-    style A fill:#e1f5e1,stroke:#333
-    style B fill:#e1f5e1,stroke:#333
-    style C fill:#ffe1e1,stroke:#333
-    style D fill:#ffe1e1,stroke:#333
-    style E fill:#e1e5ff,stroke:#333
-    style F fill:#ffe1e1,stroke:#333
+    classDef line1 fill:#e1f5e1,stroke:#2d7d2d
+    classDef line2 fill:#e1e5ff,stroke:#2d3d7d
+    classDef line3 fill:#ffe1e1,stroke:#7d2d2d
+    class W1_S,W1_A line1
+    class W2_S,W2_A line2
+    class W3_S,W3_A line3
 ```
+
+| 颜色 | 线路 | 特点 |
+|:---:|------|------|
+| 🟩 绿色 | **线路一**：Direct Mmap | 默认模式，写 mappedByteBuffer，无 commit，最简单 |
+| 🟦 蓝色 | **线路二**：TransientStorePool | 写堆外内存 → commit → flush，Page Cache 无污染，性能最高 |
+| 🟥 红色 | **线路三**：writeWithoutMmap | 写 FileChannel，mmap 只读，兼容性最好 |
 
 ---
 
@@ -570,7 +576,3 @@ flowchart TD
 | **为什么需要 commit？** | 仅线二需要——数据先写堆外内存，commit 是"将堆外内存复制到 Page Cache"那一步，让消费者可见 |
 | **flush 到底做了什么？** | 调用 OS 的 `fsync` 系统调用，将 Page Cache 中的脏页强制写入物理磁盘 |
 | **怎么选？** | 默认用线一；SSD + 高吞吐用线二（+200MB~2GB 堆外内存）；mmap 兼容问题用线三 |
-
----
-
-> 📖 **下一步阅读建议**：理解本文后，可以继续阅读 `CommitLog.java` 的 `putMessage()` 方法（~1000 行），看消息从网络层进入后如何一路流转到 MappedFile，以及 `MappedFileQueue` 如何管理多个 MappedFile 的滚动写入。
