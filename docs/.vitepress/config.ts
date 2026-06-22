@@ -1,5 +1,6 @@
 import { defineConfig } from "vitepress";
 import llmstxt from "vitepress-plugin-llms";
+import { withMermaid } from "vitepress-plugin-mermaid";
 import { teekConfig } from "./teekConfig";
 
 const description = [
@@ -7,7 +8,8 @@ const description = [
 ].toString();
 
 // https://vitepress.dev/reference/site-config
-export default defineConfig({
+export default withMermaid(
+  defineConfig({
   extends: teekConfig,
   title: "Eurake-24的技术小站",
   description: description,
@@ -145,4 +147,4 @@ export default defineConfig({
   //   if (context.page !== "404.md") return code;
   //   return code.replace("404 | ", "");
   // },
-});
+}));

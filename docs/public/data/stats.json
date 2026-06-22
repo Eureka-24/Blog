@@ -1,7 +1,7 @@
 {
-  "articleCount": 46,
-  "totalWords": 33154,
-  "lastUpdated": "2026-06-02",
+  "articleCount": 49,
+  "totalWords": 37185,
+  "lastUpdated": "2026-06-22",
   "categories": [
     {
       "name": "算法",
@@ -20,19 +20,28 @@
     },
     {
       "name": "杂项",
-      "count": 2,
-      "words": 466
+      "count": 3,
+      "words": 482
     },
     {
       "name": "论文",
       "count": 2,
       "words": 5851
+    },
+    {
+      "name": "计算机基础",
+      "count": 2,
+      "words": 4015
     }
   ],
   "tags": [
     {
       "name": "算法",
       "count": 33
+    },
+    {
+      "name": "存储",
+      "count": 4
     },
     {
       "name": "AI学习",
@@ -43,15 +52,11 @@
       "count": 3
     },
     {
-      "name": "记忆系统",
-      "count": 2
-    },
-    {
       "name": "论文",
       "count": 2
     },
     {
-      "name": "存储",
+      "name": "记忆系统",
       "count": 2
     },
     {
@@ -60,6 +65,10 @@
     },
     {
       "name": "Docker",
+      "count": 1
+    },
+    {
+      "name": "git",
       "count": 1
     },
     {
@@ -85,6 +94,14 @@
     {
       "name": "Cluade Code",
       "count": 1
+    },
+    {
+      "name": "mmap",
+      "count": 1
+    },
+    {
+      "name": "RocketMQ",
+      "count": 1
     }
   ],
   "timeline": {
@@ -92,10 +109,26 @@
       "05": 39
     },
     "2026": {
+      "06": 3,
       "05": 7
     }
   },
   "recentArticles": [
+    {
+      "title": "Java MMap 内存映射文件底层原理学习记录",
+      "path": "/04.计算机基础/存储/Java MMap 内存映射文件底层原理学习记录",
+      "date": "2026-06-22"
+    },
+    {
+      "title": "RocketMQ MappedFile 三种写入、提交、刷盘方式详解",
+      "path": "/04.计算机基础/存储/RocketMQ",
+      "date": "2026-06-22"
+    },
+    {
+      "title": "git常见问题",
+      "path": "/99.杂项/git常见问题",
+      "date": "2026-06-17"
+    },
     {
       "title": "记忆系统深度复盘：Agent 应该记住什么、怎么记住、记住多久？",
       "path": "/03.AI/AI学习/记忆系统回忆录",
@@ -123,36 +156,22 @@
     },
     {
       "title": "WSL2网络代理配置",
-      "path": "/04.杂项/WSL2网络代理配置",
+      "path": "/99.杂项/WSL2网络代理配置",
       "date": "2026-05-13"
     },
     {
       "title": "PacificA Replication in Log-Based Distributed Storage Systems",
       "path": "/02.论文/00.存储/PacificA Replication in Log-Based Distributed Storage Systems",
       "date": "2026-05-11"
-    },
-    {
-      "title": "Docker常见问题",
-      "path": "/04.杂项/Docker常见问题",
-      "date": "2025-05-09"
-    },
-    {
-      "title": "Latex使用tips",
-      "path": "/01.ISAC/Latex使用tips",
-      "date": "2025-05-08"
-    },
-    {
-      "title": "一些通信原理实践中的问题总结",
-      "path": "/01.ISAC/一些通信原理实践中的问题总结",
-      "date": "2025-05-08"
     }
   ],
   "pathTitleMap": {
     "/01.ISAC/Latex使用tips": "Latex使用tips",
     "/01.ISAC/一些通信原理实践中的问题总结": "一些通信原理实践中的问题总结",
     "/01.ISAC/粒子滤波": "粒子滤波",
-    "/04.杂项/Docker常见问题": "Docker常见问题",
-    "/04.杂项/WSL2网络代理配置": "WSL2网络代理配置",
+    "/99.杂项/Docker常见问题": "Docker常见问题",
+    "/99.杂项/git常见问题": "git常见问题",
+    "/99.杂项/WSL2网络代理配置": "WSL2网络代理配置",
     "/00.算法/算法刷题/AcWing-1223-最大比例": "AcWing-1223-最大比例",
     "/00.算法/算法刷题/Area-of-Polygons-POJ-2043-扫描线": "Area-of-Polygons-POJ-2043-扫描线",
     "/00.算法/算法刷题/CF311E-Biologits-最小割": "CF311E-Biologits-最小割",
@@ -186,14 +205,16 @@
     "/00.算法/算法学习/计算几何-基础篇": "计算几何-基础篇",
     "/00.算法/算法学习/高精度-分片": "高精度-分片",
     "/00.算法/算法学习/高精度-复杂": "高精度-复杂",
+    "/02.论文/00.存储/HotRing A Hotspot-Aware In-Memory": "HotRing A Hotspot-Aware In-Memory Key-Value Store 论文总结",
+    "/02.论文/00.存储/PacificA Replication in Log-Based Distributed Storage Systems": "PacificA Replication in Log-Based Distributed Storage Systems",
     "/03.AI/AI学习/Agent开发学习记录": "Agent开发学习记录",
     "/03.AI/AI学习/HelloAgents": "HelloAgents",
     "/03.AI/AI学习/Mem0": "mem0 记忆引擎源码剖析：当 AI 学会了\"记事儿\"",
     "/03.AI/AI学习/记忆系统回忆录": "记忆系统深度复盘：Agent 应该记住什么、怎么记住、记住多久？",
-    "/02.论文/00.存储/HotRing A Hotspot-Aware In-Memory": "HotRing A Hotspot-Aware In-Memory Key-Value Store 论文总结",
-    "/02.论文/00.存储/PacificA Replication in Log-Based Distributed Storage Systems": "PacificA Replication in Log-Based Distributed Storage Systems",
     "/03.AI/AI实践/Claude Code 使用技巧": "Claude Code 使用技巧",
-    "/03.AI/AI实践/ECC学习": "ECC学习"
+    "/03.AI/AI实践/ECC学习": "ECC学习",
+    "/04.计算机基础/存储/Java MMap 内存映射文件底层原理学习记录": "Java MMap 内存映射文件底层原理学习记录",
+    "/04.计算机基础/存储/RocketMQ": "RocketMQ MappedFile 三种写入、提交、刷盘方式详解"
   },
   "pathTagsMap": {
     "/01.ISAC/Latex使用tips": [
@@ -205,10 +226,13 @@
     "/01.ISAC/粒子滤波": [
       "ISAC"
     ],
-    "/04.杂项/Docker常见问题": [
+    "/99.杂项/Docker常见问题": [
       "Docker"
     ],
-    "/04.杂项/WSL2网络代理配置": [
+    "/99.杂项/git常见问题": [
+      "git"
+    ],
+    "/99.杂项/WSL2网络代理配置": [
       "WSL"
     ],
     "/00.算法/算法刷题/AcWing-1223-最大比例": [
@@ -310,6 +334,14 @@
     "/00.算法/算法学习/高精度-复杂": [
       "算法"
     ],
+    "/02.论文/00.存储/HotRing A Hotspot-Aware In-Memory": [
+      "论文",
+      "存储"
+    ],
+    "/02.论文/00.存储/PacificA Replication in Log-Based Distributed Storage Systems": [
+      "论文",
+      "存储"
+    ],
     "/03.AI/AI学习/Agent开发学习记录": [
       "AI学习",
       "Agent"
@@ -327,14 +359,6 @@
       "AI学习",
       "记忆系统"
     ],
-    "/02.论文/00.存储/HotRing A Hotspot-Aware In-Memory": [
-      "论文",
-      "存储"
-    ],
-    "/02.论文/00.存储/PacificA Replication in Log-Based Distributed Storage Systems": [
-      "论文",
-      "存储"
-    ],
     "/03.AI/AI实践/Claude Code 使用技巧": [
       "AI实践",
       "Claude Code"
@@ -342,6 +366,14 @@
     "/03.AI/AI实践/ECC学习": [
       "AI实践",
       "Cluade Code"
+    ],
+    "/04.计算机基础/存储/Java MMap 内存映射文件底层原理学习记录": [
+      "存储",
+      "mmap"
+    ],
+    "/04.计算机基础/存储/RocketMQ": [
+      "存储",
+      "RocketMQ"
     ]
   }
 }
