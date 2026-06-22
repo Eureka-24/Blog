@@ -10,7 +10,6 @@ tags:
 
 # RocketMQ MappedFile 三种写入、提交、刷盘方式详解
 
-
 ## 一、前置概念：数据持久化的三层缓冲
 
 在理解 MappedFile 的三条线之前，先搞清楚操作系统和 JVM 中的数据流动层级：
